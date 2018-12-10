@@ -47,7 +47,31 @@ Environment.
 * Target average score to achieve: 13 
 
    1) **Vector Environment (Basic Model):**
-     ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
+   
+      The best Model Configuration: More on different configurations can be found [here](https://github.com/Sardhendu/DeepRL/blob/master/navigation/navigation-vector.ipynb)
+      
+      '''python
+        NUM_EPISODES = 2000
+        NUM_TIMESTEPS = 1000
+        
+        BUFFER_SIZE = 100000
+        BATCH_SIZE = 64
+        UPDATE_AFTER_STEP = 4
+        
+        SOFT_UPDATE = True
+        TAU = 0.001                 # Soft update parameter for target_network
+        
+        GAMMA = 0.99                # Discount value
+        EPSILON = 1                 # Epsilon value for action selection
+        EPSILON_DECAY = 0.995       # Epsilon decay for epsilon greedy policy
+        EPSILON_MIN = 0.01          # Minimum epsilon to reach
+        
+        LEARNING_RATE = 0.0005  # Learning rate for the network
+        
+        Q_LEARNING_TYPE = 'dqn' # dqn also available, ddqn is double dqn
+     '''
+        
+        ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
      
    2) **Visual Environment:** [TODO]
    
