@@ -135,7 +135,6 @@ class RLAgent:
         ======
             local_model (PyTorch model): weights will be copied from
             target_model (PyTorch model): weights will be copied to
-            tau (float): interpolation parameter
 
         Idea
         ======
