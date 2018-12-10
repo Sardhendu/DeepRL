@@ -5,11 +5,11 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from DeepRL.collect_banana.buffer import MemoryER#, MemoryPER
-from DeepRL.collect_banana import utils
+from DeepRL.navigation.buffer import MemoryER#, MemoryPER
+from DeepRL.navigation import utils
 
 from DeepRL import commons as cmn
-from DeepRL.collect_banana import model
+from DeepRL.navigation import model
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

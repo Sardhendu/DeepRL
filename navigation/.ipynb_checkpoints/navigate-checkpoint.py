@@ -4,8 +4,8 @@ from collections import deque
 import numpy as np
 from unityagents import UnityEnvironment
 
-from DeepRL.collect_banana import Agent
-from DeepRL.collect_banana import Config as conf
+from DeepRL.navigation import Agent
+from DeepRL.navigation import Config as conf
 
 # TODO: GEt and set the environment
 # TODO: IMPLEMENT EPSILON GREEDY POLICY CODE WITH DECAY
