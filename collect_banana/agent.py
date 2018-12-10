@@ -5,7 +5,7 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from DeepRL.collect_banana.buffer import MemoryER, MemoryPER
+from DeepRL.collect_banana.buffer import MemoryER#, MemoryPER
 from DeepRL.collect_banana import utils
 
 from DeepRL import commons as cmn

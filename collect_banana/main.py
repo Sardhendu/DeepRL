@@ -8,55 +8,70 @@ from DeepRL.collect_banana.agent import DDQNAgent
 
 
 class CollectBanana:
-    def __init__(self, env_type='vector'):
+    def __init__(self, env_type='vector', mode='train'):
+        """
+        This is a wrapper on top of the brain environment that provides useful function to render the environment
+        call very similar to like calling the open AI gym environement.
+        
+        Wrapper Code referred from : https://github.com/yingweiy/drlnd_project1_navigation
+        
+        :param env_type:
+        """
         self.env_type = env_type
         if env_type == 'vector':
-            self.base_env = UnityEnvironment(
-                    "/Users/sam/All-Program/App/deep-reinforcement-learning/DeepRL/collect_banana/Banana.app")
+            self.base_env = UnityEnvironment("./Banana.app")
         elif env_type == 'visual':
-            self.base_env = UnityEnvironment(
-                    "/Users/sam/All-Program/App/deep-reinforcement-learning/DeepRL/collect_banana/VisualBanana.app")
+            self.base_env = UnityEnvironment("./VisualBanana.app")
         else:
             raise ValueError('Env Name not understood ....')
         # get the default brain
         self.brain_name = self.base_env.brain_names[0]
         self.brain = self.base_env.brains[self.brain_name]
         self.action_size = self.brain.vector_action_space_size
-        self.train_mode = True
-        self.last_frame = None
-        self.last2_frame = None
-        self.last3_frame = None
+        
+        if mode == 'train':
+            self.train = True
+        else:
+            self.train = False
+            
+        self.frame1 = None
+        self.frame2 = None
+        self.frame3 = None
         self.reset()
 
-        if env_type == 'visual':
+        if env_type == 'vector':
+            self.state_size = len(self.state)
+        elif env_type == 'visual':
             self.state_size = self.state.shape
         else:
-            self.state_size = len(self.state)
+            raise ValueError('Environment type not understood ....')
+            
+        print(self.state_size)
     
     def get_state(self):
         if self.env_type == 'visual':
-            # frame = np.transpose(self.env_info.visual_observations[0], (0, 3, 1, 2))[:, :, :, :]
+            
             # The DQN paper says to stack 4 frames while running the image through the neural network
             # state size is 1,84,84,3
             # Rearrange from NHWC to NCHW (Pytorch uses 3d covolution in NCHW format, cross corellation across channels)
-            frame = np.transpose(self.env_info.visual_observations[0], (0, 3, 1, 2))[:, :, :, :]  # cut the image partially
+            frame = np.transpose(self.env_info.visual_observations[0], (0, 3, 1, 2))[:, :, :, :]
             frame_size = frame.shape  # 1,3,84,84
             # print(frame_size)
-            # NCDHW
-            nframes = 4
-            self.state = np.zeros((1, frame_size[1], nframes, frame_size[2], frame_size[3]))
+            self.state = np.zeros((1, frame_size[1], 4, frame_size[2], frame_size[3]))
             self.state[0, :, 0, :, :] = frame
             
-            if not (self.last_frame is None):
-                self.state[0, :, 1, :, :] = self.last_frame
-            if not (self.last2_frame is None):
-                self.state[0, :, 2, :, :] = self.last2_frame
-            if not (self.last3_frame is None):
-                self.state[0, :, 3, :, :] = self.last3_frame
+            if self.frame1 is not None:
+                self.state[0, :, 1, :, :] = self.frame1
+            if self.frame2 is not None:
+                self.state[0, :, 2, :, :] = self.frame2
+            if self.frame3 is not None:
+                self.state[0, :, 3, :, :] = self.frame3
                 
-            self.last3_frame = self.last2_frame
-            self.last2_frame = self.last_frame
-            self.last_frame = frame
+            # Keep the last 3 frames in the memory to be accessed or stacked with the new input frame to supply as
+            # input to the convolution network
+            self.frame3 = self.frame2
+            self.frame2 = self.frame1
+            self.frame1 = frame
             
             # self.state = np.squeeze(self.state)  # We squeeze it becasue the code implemented in buffer will
             # unsqueeze the array
@@ -64,22 +79,24 @@ class CollectBanana:
             self.state = self.env_info.vector_observations[0]
             
         else:
-            raise ValueError('Environment name is not correct.')
+            raise ValueError('Environment name %s not understood.'%str(self.env_type))
         
     def reset(self):
-        self.env_info = self.base_env.reset(train_mode=self.train_mode)[self.brain_name]
+        self.env_info = self.base_env.reset(train_mode=self.train)[self.brain_name]
         self.get_state()
         return self.state
     
-    def render(self):
-        pass
-    
     def step(self, action):
+        """
+        This function returns the value in the format of Open AI gym
+        :param action:
+        :return:
+        """
         self.env_info = self.base_env.step(action)[self.brain_name]  # send the action to the environment
         self.get_state()
-        reward = self.env_info.rewards[0]  # get the reward
-        done = self.env_info.local_done[0]  # see if episode has finished
-        return self.state, reward, done, None  # info is none
+        reward = self.env_info.rewards[0]
+        done = self.env_info.local_done[0]
+        return self.state, reward, done, None
     
     def close(self):
         self.base_env.close()
@@ -141,6 +158,7 @@ class DDQN:
                     print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
         
         # torch.save(self.agent.local_network.state_dict(), self.saved_network)
+        self.env.close()
         
         return scores
 
@@ -164,17 +182,4 @@ class DDQN:
         self.env.close()
 
 
-
-# device = 'cpu'
-# from DeepRL.src.collect_banana.model import VisualQNEtwork
-# env_type = 'visual'
-# env = CollectBanana(env_type)
-#
-# print(env.state.shape)
-# states = torch.from_numpy(env.state).float().to(device)
-# my_net = VisualQNEtwork(state_size=env.state_size, action_size=4, seed=0, network_name='net1')
-# my_net.forward(states)
-
-
-
-
+# CollectBanana(env_type='vector', mode='train')

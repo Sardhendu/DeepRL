@@ -12,22 +12,29 @@ Train an agent to navigate (and collect bananas!) in a large, square world.
 ### Description:
 This project is aimed to make a reinforcement learning DQN agent learn to collect yellow banana. This repo contains two implementation, 
    * **Vector environment:** Learning to collect yellow banana using vector states with 37 dimensions that includes agent's velocity, along with ray-based perception of objects around agent's forward direction.
-   * **Visual environment:** Learning to collect yellow banana using image states, where each image is of 84x84x3 shape. 
+   * **Visual environment:** [Work in progress] Learning to collect yellow banana using image states, where each 
+   image is of 84x84x3 
+   shape. 
    
 ### Implemented Functionality:
-   * Buffer (Memory): Experience Replay and Priority Experience Replay
+   * Buffer (Memory): Experience Replay and Priority Experience Replay [TODO]
    * Agent: DQN (Deep Q network) and DDQN (Double Deep Q Network)
-   * Neural Network Architecture: Multilayer Neural net and Convolution Neural Networks
+   * Neural Network Architecture: Multilayer Neural network (Vector Environemnt) and Convolution Neural Networks 
+   (Visual Environment)
    * Fixed-Q-targets: With soft update and Hard Update   
 
 #### Get Started
-   1) **navigation.ipynb:** Performance of the Agent for different Hyperparameter-configuration   
+   1) **navigation.ipynb:** Performance of the Agent for various Hyperparameter-configuration   
    2) **main.py:** Environment instantiation for Vector and Visual environment
    3) **agent.py:** Functionality DQN ad DDQN agent
    4) **model.py:** The neural net architecture for vector and visual environment
-   5) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer 
+   5) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
+   6) **Banana.app**: the directory to save the unity environment run time of the basic agent in sensor mode.
+folder visual_banana: the directory to save the unity environment run time of the agent in pixel/visual mode.
 
 #### Results
+   
+* Target average score to achieve: 13 
 
    1) **Vector Environment (Basic Model):**
      ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/collect_banana/images/model1_score_plot.png)
