@@ -34,9 +34,10 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    (_For Windows users_) Check out [this link](https://support.microsoft.com/en-us/help/827218/how-to-determine-whether-a-computer-is-running-a-32-bit-version-or-64) if you need help with determining if your computer is running a 32-bit version or 64-bit version of the Windows operating system.
 
     (_For AWS_) If you'd like to train the agent on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P1/Banana/Banana_Linux_NoVis.zip) to obtain the environment.
-2) **navigation.ipynb:** Performance of the Agent for various Hyperparameter-configuration   
-3) **main.py:** Environment instantiation for Vector and Visual environment
-4) **agent.py:** Functionality DQN ad DDQN agent
+2) **navigation-vector.ipynb:** Performance of the Agent for various Hyperparameter-configuration for Vector 
+Environment.  
+3) **main.py:** Environment instantiation for Vector and Visual environment.
+4) **agent.py:** Algorithm DQN and DDQN agent
 5) **model.py:** The neural net architecture for vector and visual environment
 6) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
 
