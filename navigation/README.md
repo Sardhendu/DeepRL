@@ -50,7 +50,7 @@ Environment.
    
       The best Model Configuration: More on different configurations can be found [here](https://github.com/Sardhendu/DeepRL/blob/master/navigation/navigation-vector.ipynb)
       
-      '''python
+    ```python
         NUM_EPISODES = 2000
         NUM_TIMESTEPS = 1000
         
@@ -69,9 +69,18 @@ Environment.
         LEARNING_RATE = 0.0005  # Learning rate for the network
         
         Q_LEARNING_TYPE = 'dqn' # dqn also available, ddqn is double dqn
-     '''
+    ```
+    
+    ```python
+        Episode 100	Average Score: 1.01
+        Episode 200	Average Score: 3.73
+        Episode 300	Average Score: 7.62
+        Episode 400	Average Score: 10.37
+        Episode 488	Average Score: 12.94
+        Environment solved in 489 episodes!	Average Score: 13.01
+    ```    
         
-        ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
      
    2) **Visual Environment:** [TODO]
    
