@@ -30,6 +30,9 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
 #### Results
 
    1) **Vector Environment (Basic Model):**
+     ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/collect_banana/images/model1_score_plot.png)
+     
+   2) **Visual Environment:** [TODO]
    
     
 ### Reference:
