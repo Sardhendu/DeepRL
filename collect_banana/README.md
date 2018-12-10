@@ -29,9 +29,6 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    3) **agent.py:** Functionality DQN ad DDQN agent
    4) **model.py:** The neural net architecture for vector and visual environment
    5) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
-   6) **Banana.app**: the directory to save the unity environment run time of the basic agent in sensor mode.
-folder visual_banana: the directory to save the unity environment run time of the agent in pixel/visual mode.
-
 #### Results
    
 * Target average score to achieve: 13 
