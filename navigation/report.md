@@ -16,6 +16,7 @@ Implementation
         * θ_target = τ*θ_local + (1 - τ)*θ_target
     
     2) *Hard-update:* In hard update the agent updates the weights of the target-network after every t-timstep. 
+        * θ_target = θ_local
     
 2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. To be precise
  in Double-Q-network while learning the action is chosen by the local network but values corresponding to the action 
