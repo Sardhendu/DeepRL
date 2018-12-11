@@ -29,7 +29,7 @@ Vector Environment:
 
 #### Network Graph:
 
-    ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/vector_nn.png)
+![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/vector_nn.png)
 
 #### Results:
 
@@ -69,7 +69,7 @@ Vector Environment:
              Environment solved in 489 episodes!	Average Score: 13.01
          ```    
             
-           ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
       
    * **DQN Hard-update with best Hyper-parameter-configuration:**    
    
@@ -107,7 +107,7 @@ Vector Environment:
              Environment solved in 630 episodes!	Average Score: 13.00
          ```    
            
-          ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model8_score_plot.png)   
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model8_score_plot.png)   
          
     
 Visual Environment:
