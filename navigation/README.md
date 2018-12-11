@@ -23,7 +23,7 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    (Visual Environment)
    * Fixed-Q-targets: With soft update and Hard Update   
 
-#### Getting Started
+#### Getting Started: [Jump to the Report](https://github.com/Sardhendu/DeepRL/blob/master/navigation/report.md)
 1) Download the environment from one of the links below. Select the environment that matches your 
  operating system:
     - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P1/Banana/Banana_Linux.zip)
@@ -34,30 +34,16 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    (_For Windows users_) Check out [this link](https://support.microsoft.com/en-us/help/827218/how-to-determine-whether-a-computer-is-running-a-32-bit-version-or-64) if you need help with determining if your computer is running a 32-bit version or 64-bit version of the Windows operating system.
 
     (_For AWS_) If you'd like to train the agent on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P1/Banana/Banana_Linux_NoVis.zip) to obtain the environment.
-2) **navigation-vector.ipynb:** Performance of the Agent for various Hyperparameter-configuration for Vector 
+2) **navigation-vector.ipynb:** Performance of the Agent for various Hyperparameter-configuration for the Vector 
 Environment.  
-3) **main.py:** Environment instantiation for Vector and Visual environment.
-4) **agent.py:** Algorithm DQN and DDQN agent
-5) **model.py:** The neural net architecture for vector and visual environment
-6) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
+3) **navigation-visual.ipynb:** Performance of the Agent for various Hyperparameter-configuration for the Visual 
+Environment. [Work in Progress]
+4) **main.py:** Environment instantiation for Vector and Visual environment. 
+5) **agent.py:** Algorithm DQN and DDQN agent
+6) **model.py:** The neural net architecture for vector and visual environment
+7) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
+8) **report.md:** Displays the best implemented methods, agent score and future improvements.  
 
-
-#### Results
-   
-* Target average score to achieve: 13 
-
-   1) **Vector Environment (Basic Model):**
-   
-      The best Model Configuration: More on different configurations can be found [here](https://github.com/Sardhendu/DeepRL/blob/master/navigation/navigation-vector.ipynb)
-    
-     
-   2) **Visual Environment:** [TODO]
-   
-   
-### Ideas for future improvement:
-* Implement prioritized experience replay buffer. [In Progress] 
-* Implement Dueling network architecture.
-* Experiment with different Network architectures.
     
 ### Reference:
 
