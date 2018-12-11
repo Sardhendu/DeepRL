@@ -25,9 +25,10 @@ Implementation
 
 
 
-Vector Environment:
+Vector Environment: 
 ----
 
+[*View results for other hyperparameter configuration*](https://github.com/Sardhendu/DeepRL/blob/master/navigation/navigation-vector.ipynb)
 #### Network Graph:
 
 ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/vector_nn.png)
