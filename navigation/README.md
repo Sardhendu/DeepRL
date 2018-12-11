@@ -49,38 +49,7 @@ Environment.
    1) **Vector Environment (Basic Model):**
    
       The best Model Configuration: More on different configurations can be found [here](https://github.com/Sardhendu/DeepRL/blob/master/navigation/navigation-vector.ipynb)
-      
-    ```python
-        NUM_EPISODES = 2000
-        NUM_TIMESTEPS = 1000
-        
-        BUFFER_SIZE = 100000
-        BATCH_SIZE = 64
-        UPDATE_AFTER_STEP = 4
-        
-        SOFT_UPDATE = True
-        TAU = 0.001                 # Soft update parameter for target_network
-        
-        GAMMA = 0.99                # Discount value
-        EPSILON = 1                 # Epsilon value for action selection
-        EPSILON_DECAY = 0.995       # Epsilon decay for epsilon greedy policy
-        EPSILON_MIN = 0.01          # Minimum epsilon to reach
-        
-        LEARNING_RATE = 0.0005  # Learning rate for the network
-        
-        Q_LEARNING_TYPE = 'dqn' # dqn also available, ddqn is double dqn
-    ```
     
-    ```python
-        Episode 100	Average Score: 1.01
-        Episode 200	Average Score: 3.73
-        Episode 300	Average Score: 7.62
-        Episode 400	Average Score: 10.37
-        Episode 488	Average Score: 12.94
-        Environment solved in 489 episodes!	Average Score: 13.01
-    ```    
-        
-   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/navigation/images/model1_score_plot.png)
      
    2) **Visual Environment:** [TODO]
    
