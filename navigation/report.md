@@ -8,7 +8,7 @@ The navigation project to train an agent to collect "yellow banana" and avoid "b
 hyperparameter configuration. Below are the description on some of the implemented functionality and there outcomes.
 
 
-Implementation 
+Implementations 
 ------- 
 1. **Fixed-Q-targets:** The agent has two different implementation for Fixed-Q-targets. 
     1) *Soft-update:* In soft update the agent updates the weights of the target-network at each learning step (every 
@@ -21,9 +21,12 @@ Implementation
 2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. To be precise
  in Double-Q-network while learning the action is chosen by the local network but values corresponding to the action 
  are fetched from the target network. 
-
-
-
+ 
+3. **Priority-Experience-Replay Buffer:** The idea for a Priority experience replay buffer is to sample experiences 
+with higher TD error more often. Some experiences are more important than others. Since the experience replay buffer 
+size is limited, these rare experiences might just get deleted without contributing to the agent's learning. 
+Therefore, the priority experience replay helps in weighting (providing probabilities of sampling) to all experiences
+ based on their sampling frequency and td-error (The more the td-error, the more is to learn from that experience). 
 
 Vector Environment: 
 ----
