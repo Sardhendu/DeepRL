@@ -41,7 +41,7 @@ Environment. [Work in Progress]
 4) **main.py:** Environment instantiation for Vector and Visual environment. 
 5) **agent.py:** Algorithm DQN and DDQN agent
 6) **model.py:** The neural net architecture for vector and visual environment
-7) **buffer.py:** Implementation of Experience Replay and Priority Action Replay Buffer
+7) **buffer.py:** Implementation of Experience Replay and Priority Experience Replay Buffer
 8) **report.md:** Displays the best implemented methods, agent score and future improvements.  
 
     

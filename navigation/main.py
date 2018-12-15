@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from unityagents import UnityEnvironment
 
-from DeepRL.navigation.agent import DDQNAgent
+from DeepRL.navigation.agent import DDQNAgent, DDQNAgentPER
 
 
 class CollectBanana:
@@ -103,8 +103,21 @@ class CollectBanana:
 
 
 class DDQN:
-    def __init__(self, args, env, env_type='vector'):
-        self.agent = DDQNAgent(args, env_type, seed=0)
+    def __init__(self, args, env, env_type='vector', buffer_type='ER'):
+        """
+        
+        :param args:            Config class
+        :param env:             environment (Unity)
+        :param env_type:        (str) Vector or Visual
+        :param buffer_type:     (str) ER (experience replay buffer), PER (Priority Experience Replay buffer)
+        
+        """
+        
+        if buffer_type == 'ER':
+            self.agent = DDQNAgent(args, env_type, seed=0)
+        elif buffer_type == 'PER':
+            self.agent = DDQNAgentPER(args, env_type, seed=0)
+            
         self.env = env
         self.args = args
         self.score_window_size = 100

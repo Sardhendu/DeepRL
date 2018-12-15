@@ -5,7 +5,7 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from DeepRL.navigation.buffer import MemoryER#, MemoryPER
+from DeepRL.navigation.buffer import MemoryER, MemoryPER
 from DeepRL.navigation import utils
 
 from DeepRL import commons as cmn
@@ -302,6 +302,7 @@ class DDQNAgentPER(RLAgent):
                 # print('Going to learn: ...............', self.t_step)
                 # b_idx, experiences, weights = self.memory.sample()
                 b_idx, experiences, weights = self.memory.sample()
+                # print(weights)
                 self.learn(experiences, self.GAMMA, episode_num, tree_idx=b_idx, weights=weights)
         
         if self.HARD_UPDATE:
@@ -370,7 +371,7 @@ class DDQNAgentPER(RLAgent):
         self.stats['td_error'].append(float(avg_td_error))
         
         # Update local_network parameters
-        print(weights)
+        # print(weights)
         # TODO: Check why weights is a zero vector, something is wrong here with the buffer code
         loss = torch.sum((expected_value - target_value) ** 2)
         # loss = torch.sum(weights * (expected_value - target_value) ** 2)
