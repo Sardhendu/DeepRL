@@ -1,8 +1,11 @@
+
+
+import os
 import numpy as np
 import torch
 
 import torch.optim as optim
-
+from collections import defaultdict
 
 from DeepRL.pong_atari.model import Model
 from DeepRL.pong_atari.utils import collect_trajectories
@@ -14,28 +17,41 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Agent:
-    def __init__(self, env):
+    def __init__(self, env, use_model_path=None):
         self.env = env
-        self.policy_nn  = Model().to(device)
-
         
+        if use_model_path is None:
+            self.policy_nn = Model().to(device)
+        else:
+            self.policy_nn = torch.load(use_model_path)
+
+        self.stats_dict = defaultdict(list)
         self.learning_rate = 0.0001
         self.discount = 0.995
+        self.beta = 0.01
+        self.beta_decay = 0.995
+        
+        # To perform Proximal policy Optimization
+        self.clip_surrogate = True
+        self.epsilon_clip = 0.01
+        self.num_inner_loops = 4
+        
+
+        self.save_at_episode = 100
+        self.save_model_path = '/Users/sam/All-Program/App-DataSet/DeepRL/play_pong/reinforce'
 
         self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)
 
     def get_actions_probs(self, states):
         """
-            states: [H, n, 2, 80, 80] : [trajectory_horizon, num_parallel_instances, num_consecutive_frames, img_height,
-            img_width], Grayscale
-            Operations:
+        
+        :param states: [trajectory_horizon, num_parallel_instances, num_consecutive_frames, img_height,
+                            img_width], Grayscale
+        :return:    sigmoid_activateions: action_probabilities [H, n] each column represents the action taken by each parallel nodes
+        
+        Operations:
                 states_collated = [H*n, 2, 80, 80] : [mini_batch_size, num_consecutive_frames, img_height, img_width]
-
-            Returns:
-                sigmoid_activateions: action_probabilities [H, n] each column represents the action taken by each
-                parallel nodes
         """
-    
         # States to Probabilities
         states = torch.stack(states)  # Convert the states to torch framework
         # Since we choose "n" parallel instances rendering 100 trajectory each we have to collate them to n*100
@@ -48,7 +64,7 @@ class Agent:
         return sigmoid_activations
     
         
-    def loss(self, old_action_probs, states, actions, rewards, beta=0.01):
+    def surrogate(self, old_action_probs, states, actions, rewards, clip_surrogate):
     
         """
         :param nn_policy:           Model (Neural Network)
@@ -58,6 +74,7 @@ class Agent:
         :param rewards:             [H, n] Rewards for state-action for each time step in trajectory
         :param discount:            Discount value
         :param beta:                decay param to control exploration
+        :param clip_surrogate:      bool (If you want to clip the losses within 1-epsilon and 1+epsilon to avoid bad approximation)
         :return:
         
             rewards: [H,  n] (horizon, num_parallel_instances)
@@ -80,6 +97,8 @@ class Agent:
             4. sigmoid Activation ([H, N]): Action probability from policy network to each input states
                 If action_prob <= 0.5, action = RIGHTFIRE
                 If action_prob > 0.5, action = LEFTFIRE
+            5. Clipped Surrogate:
+                Follows the proximal policy optimization
         """
         RIGHTFIRE = 4
         LEFTFIRE = 5
@@ -89,10 +108,10 @@ class Agent:
         # Compute discounted rewards:
         discounts = pow(self.discount, np.arange(len(rewards)))
         discounted_rewards = rewards * discounts[:, np.newaxis]  # [H, n] * [H, 1] = [H, n]
-        # Flip vertically, do cumulative sum, reflip-vertically
+        # Flip vertically, do consequtive cumulative sum, reflip-vertically
         discounted_future_rewards = discounted_rewards[::-1].cumsum(axis=0)[::-1]  # [H, n]
         
-        # Normalize Rewards with mean and standard deviation, equivallent to Batch normalization
+        # Normalize Rewards with mean and standard deviation, equivalent to Batch normalization
         mean = np.mean(discounted_future_rewards, axis=1)
         std = np.std(discounted_future_rewards, axis=1) + 1.0e-10
         discounted_future_rewards_norm = (discounted_future_rewards - mean[:, np.newaxis]) / std[:, np.newaxis]
@@ -107,34 +126,53 @@ class Agent:
         rewards = torch.tensor(discounted_future_rewards_norm, dtype=torch.float, device=device)
         old_action_probs = torch.tensor(old_action_probs, dtype=torch.float, device=device)
         new_action_probs = torch.tensor(new_action_probs, dtype=torch.float, device=device)
-        new_action_probs = torch.where(new_action_probs == RIGHTFIRE, new_action_probs, 1.0 - new_action_probs)
+        new_action_probs = torch.where(actions == RIGHTFIRE, new_action_probs, 1.0 - new_action_probs)
         
         # Loss is  *sum(reward_future_norm * d_theta(log(at|st)) or = *sum(reward_future_norm * p(at|st) / p(at|st)
-        loss = rewards*torch.log(new_action_probs)
+        # loss = rewards*torch.log(new_action_probs)
+        if clip_surrogate:
+            reinforce_ratio = new_action_probs / old_action_probs
+            reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - self.epsilon_clip, 1 + self.epsilon_clip)
+            surrogate_loss = torch.min(reinforce_ratio * rewards, reinforce_clip_ratio * rewards)
+        else:
+            surrogate_loss = (new_action_probs / old_action_probs)*rewards
         # print(torch.mean(old_action_probs), torch.mean(new_action_probs), torch.mean(loss))
         
         # For regularization Regularization Cross-entropy loss: -(ylog(h) + (1-y)log(1-h)):
         # It steers the probability closer to 0.5 and helps avoiding straight probability of 0 and 1
-        # cross_entropy_reg = -1 * (
-        #     new_action_probs * torch.log(old_action_probs + 1.e-10) +
-        #     (1-new_action_probs) * torch.log((1-old_action_probs) + 1.e-10)
-        # )
+        cross_entropy_reg = -1 * (
+            new_action_probs * torch.log(old_action_probs + 1.e-10) +
+            (1-new_action_probs) * torch.log((1-old_action_probs) + 1.e-10)
+        )
         
         # return torch.mean(loss+beta*cross_entropy_reg)
         
-        return torch.mean(loss)
-        
-    def learn(self, n, tmax, beta):
+        return torch.mean(surrogate_loss  + self.beta*cross_entropy_reg)
+    
+    
+    def learn(self, n, tmax, episode_num):
         # Collect Trajectories
-        # print('00000000000000')
         old_probs, states, actions, rewards = collect_trajectories(self.env, self.policy_nn, tmax=tmax, n=n)
 
-        # print('11111111111111')
-        loss = -1*self.loss(old_probs, states, actions, rewards, beta)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        del loss
+        # We take negative of log loss because pytorch by default performs gradient descent and we want to
+        # perform gradient ascend
+        for _ in range(0, self.num_inner_loops):
+            loss = -1*self.surrogate(old_probs, states, actions, rewards, self.clip_surrogate)
+            self.optimizer.zero_grad()      # Set gradients to zero to avoid overlaps
+            loss.backward()                 # Perform Gradient Descent
+            self.optimizer.step()
+            
+            # Store into stats dictionary
+            self.stats_dict['loss'].append(loss)
+            self.stats_dict['beta'].append(self.beta)
+            
+            del loss
+    
+        self.beta *= self.beta_decay
+        
+        
+        if ((episode_num+1)%self.save_at_episode) == 0:
+            torch.save(self.policy_nn, os.path.join(self.save_model_path, '%s.policy'%str(episode_num+1)))
         
         return rewards
     

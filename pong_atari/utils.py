@@ -13,9 +13,17 @@ def preprocess_single(image, bkg_color = np.array([144, 72, 17])):
     img = np.mean(image[34:-16:2,::2]-bkg_color, axis=-1)/255.
     return img
 
-# convert outputs of parallelEnv to inputs to pytorch neural net
-# this is useful for batch processing especially on the GPU
+
 def preprocess_batch(images, bkg_color = np.array([144, 72, 17])):
+    """
+    
+    Converts outputs of parallelEnv to inputs to pytorch neural net this is useful for batch processing
+    especially on the GPU
+    
+    :param images:      image batch to preprocess
+    :param bkg_color:   Color normallizer (Convert to black and white)
+    :return:
+    """
     list_of_images = np.asarray(images)
     if len(list_of_images.shape) < 5:
         list_of_images = np.expand_dims(list_of_images, 1)
@@ -29,10 +37,16 @@ def preprocess_batch(images, bkg_color = np.array([144, 72, 17])):
 
 
 
-def collect_trajectories(envs, policy, tmax=200, nrand=5, n=4):
-    
-    # number of parallel instances n=len( envs.ps)
+def collect_trajectories(envs, policy, tmax, n, nrand=5):
+    """
 
+    :param envs:         A parallel environment object
+    :param policy:       Model -> Neural network that defines a policy
+    :param tmax:         How many state-action samples in a trajectory
+    :param n:            Number of parallel environments to sample trajetories
+    :param nrand:        Perform few random steps
+    :return:
+    """
     # initialize returning lists and start the game!
     state_list=[]
     reward_list=[]
@@ -40,8 +54,10 @@ def collect_trajectories(envs, policy, tmax=200, nrand=5, n=4):
     action_list=[]
     
     envs.reset()
+    
     # start all parallel agents
     envs.step([1]*n)
+    
     # Perform nrand random steps
     for j in range(nrand):
         frame1, reward1, _, _ = envs.step(np.random.choice([RIGHTFIRE, LEFTFIRE],n))
