@@ -125,6 +125,5 @@ WORK IN PROGRESS
 
 Ideas for future improvement:
 -----
-* Implement prioritized experience replay buffer. [In Progress] 
 * Implement Dueling network architecture.
 * Experiment with different Network architectures.

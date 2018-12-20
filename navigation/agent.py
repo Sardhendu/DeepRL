@@ -372,7 +372,8 @@ class DDQNAgentPER(RLAgent):
         
         # Update local_network parameters
         # print(weights)
-        # TODO: Check why weights is a zero vector, something is wrong here with the buffer code
+        # TODO: If weights are 0, then it means that the PER_weights returns zero values. This happens when we
+        # TODO: sample experiences without filling the buffer completely.
         loss = torch.sum((expected_value - target_value) ** 2)
         # loss = torch.sum(weights * (expected_value - target_value) ** 2)
         self.optimizer.zero_grad()

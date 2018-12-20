@@ -27,13 +27,13 @@ class Agent:
 
         self.stats_dict = defaultdict(list)
         self.learning_rate = 0.0001
-        self.discount = 0.995
+        self.discount = 0.99
         self.beta = 0.01
         self.beta_decay = 0.995
         
         # To perform Proximal policy Optimization
         self.clip_surrogate = True
-        self.epsilon_clip = 0.01
+        self.epsilon_clip = 0.1
         self.num_inner_loops = 4
         
 
@@ -42,7 +42,7 @@ class Agent:
 
         self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)
 
-    def get_actions_probs(self, states):
+    def get_actions_probs(self, policy, states):
         """
         
         :param states: [trajectory_horizon, num_parallel_instances, num_consecutive_frames, img_height,
@@ -57,20 +57,20 @@ class Agent:
         # Since we choose "n" parallel instances rendering 100 trajectory each we have to collate them to n*100
         # minibatch_size
         policy_input = states.view(-1, *states.shape[-3:])
-        sigmoid_activations = self.policy_nn.forward(policy_input)
+        sigmoid_activations = policy.forward(policy_input)
     
         # Convert the activation back to probabilities for each parallel instances
         sigmoid_activations = sigmoid_activations.view(states.shape[:-3])
         return sigmoid_activations
     
         
-    def surrogate(self, old_action_probs, states, actions, rewards, clip_surrogate):
+    def surrogate(self, policy, old_action_probs, states, actions, rewards, clip_surrogate):
     
         """
         :param nn_policy:           Model (Neural Network)
         :param old_action_probs:    action probabilities assigned while sampling trajectories
         :param states:              [tau, n, nfr, img_h, img_w ] states in trajectories
-        :param actions:             [H n] Trajectory actions
+        :param actions:             [H, n] Trajectory actions
         :param rewards:             [H, n] Rewards for state-action for each time step in trajectory
         :param discount:            Discount value
         :param beta:                decay param to control exploration
@@ -116,16 +116,14 @@ class Agent:
         std = np.std(discounted_future_rewards, axis=1) + 1.0e-10
         discounted_future_rewards_norm = (discounted_future_rewards - mean[:, np.newaxis]) / std[:, np.newaxis]
         
-        # Collect Actions
-        actions = torch.tensor(actions, dtype=torch.int8, device=device)
-        
-        # Run Policy Network and fetch output probabilities
-        new_action_probs = self.get_actions_probs(states)  # [H, N]
-        
         # Convert to Pytorch Tensors:
+        actions = torch.tensor(actions, dtype=torch.int8, device=device)
         rewards = torch.tensor(discounted_future_rewards_norm, dtype=torch.float, device=device)
         old_action_probs = torch.tensor(old_action_probs, dtype=torch.float, device=device)
-        new_action_probs = torch.tensor(new_action_probs, dtype=torch.float, device=device)
+
+        # Run Policy Network and fetch output probabilities
+        new_action_probs = self.get_actions_probs(policy, states)  # [H, N]
+        # new_action_probs = torch.tensor(new_action_probs, dtype=torch.float, device=device)
         new_action_probs = torch.where(actions == RIGHTFIRE, new_action_probs, 1.0 - new_action_probs)
         
         # Loss is  *sum(reward_future_norm * d_theta(log(at|st)) or = *sum(reward_future_norm * p(at|st) / p(at|st)
@@ -147,7 +145,7 @@ class Agent:
         
         # return torch.mean(loss+beta*cross_entropy_reg)
         
-        return torch.mean(surrogate_loss  + self.beta*cross_entropy_reg)
+        return torch.mean(surrogate_loss + self.beta*cross_entropy_reg)
     
     
     def learn(self, n, tmax, episode_num):
@@ -157,7 +155,7 @@ class Agent:
         # We take negative of log loss because pytorch by default performs gradient descent and we want to
         # perform gradient ascend
         for _ in range(0, self.num_inner_loops):
-            loss = -1*self.surrogate(old_probs, states, actions, rewards, self.clip_surrogate)
+            loss = -1*self.surrogate(self.policy_nn, old_probs, states, actions, rewards, self.clip_surrogate)
             self.optimizer.zero_grad()      # Set gradients to zero to avoid overlaps
             loss.backward()                 # Perform Gradient Descent
             self.optimizer.step()
@@ -169,6 +167,7 @@ class Agent:
             del loss
     
         self.beta *= self.beta_decay
+        self.epsilon_clip *= .999
         
         
         if ((episode_num+1)%self.save_at_episode) == 0:
