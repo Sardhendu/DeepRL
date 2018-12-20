@@ -6,40 +6,38 @@ import torch
 
 import torch.optim as optim
 from collections import defaultdict
-
+from DeepRL import commons as cmn
 from DeepRL.pong_atari.model import Model
 from DeepRL.pong_atari.utils import collect_trajectories
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-
-
-
 class Agent:
-    def __init__(self, env, use_model_path=None):
-        self.env = env
+    def __init__(self, args, env):
+        self.learning_rate = args.LEARNING_RATE
+        self.discount = args.DISCOUNT
+        self.beta = args.BETA
+        self.beta_decay = args.BETA_DECAY
         
-        if use_model_path is None:
-            self.policy_nn = Model().to(device)
-        else:
-            self.policy_nn = torch.load(use_model_path)
-
-        self.stats_dict = defaultdict(list)
-        self.learning_rate = 0.0001
-        self.discount = 0.99
-        self.beta = 0.01
-        self.beta_decay = 0.995
-        
-        # To perform Proximal policy Optimization
-        self.clip_surrogate = True
-        self.epsilon_clip = 0.1
-        self.num_inner_loops = 4
-        
+        # Whether to perform Proximal policy Optimization
+        self.clip_surrogate = args.CLIP_SURROGATE
+        # The Epsilon clip value the ratio of new_action_prob/old_action_prob is clamped at 1+epsilon_clip
+        self.epsilon_clip = args.EPSILON_CLIP
+        self.epsilon_clip_decay = args.EPSILON_CLIP_DECAY
+        self.trajectory_inner_loop = args.TRAJECTORY_INNER_LOOP_CNT
 
         self.save_at_episode = 100
-        self.save_model_path = '/Users/sam/All-Program/App-DataSet/DeepRL/play_pong/reinforce'
-
+        self.save_model_path = args.CHECKPOINT_PATH
+        self.save_stats_path = args.STATS_JSON_PATH
+        
+        if os.path.exists(self.save_stats_path):
+            self.stats_dict = cmn.read_json(self.save_stats_path)
+        else:
+            self.stats_dict = defaultdict(list)
+        self.env = env
+        self.policy_nn = Model(args.NET_NAME).to(device)
         self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)
 
     def get_actions_probs(self, policy, states):
@@ -85,7 +83,7 @@ class Agent:
             Notation:
             1. tau: number of trajectories
             2. H: Horizon (Num of timesteps in a trajectory)
-            3. n: Parrallel nodes (number of parallel runs)
+            3. n: Parallel nodes (number of parallel runs)
             4. nfr: Number of consecutive frames
             5. H*n: 1 mini-batch
     
@@ -145,33 +143,44 @@ class Agent:
         
         # return torch.mean(loss+beta*cross_entropy_reg)
         
-        return torch.mean(surrogate_loss + self.beta*cross_entropy_reg)
+        return (torch.mean(surrogate_loss + self.beta*cross_entropy_reg),
+                torch.mean(reinforce_ratio),
+                torch.mean(reinforce_clip_ratio),
+                torch.mean(surrogate_loss)
+                )
     
     
-    def learn(self, n, tmax, episode_num):
+    def learn(self, horizon, num_parallel_env, episode_num):
         # Collect Trajectories
-        old_probs, states, actions, rewards = collect_trajectories(self.env, self.policy_nn, tmax=tmax, n=n)
+        old_probs, states, actions, rewards = collect_trajectories(self.env, self.policy_nn, horizon, num_parallel_env)
 
         # We take negative of log loss because pytorch by default performs gradient descent and we want to
         # perform gradient ascend
-        for _ in range(0, self.num_inner_loops):
-            loss = -1*self.surrogate(self.policy_nn, old_probs, states, actions, rewards, self.clip_surrogate)
+        for _ in range(0, self.trajectory_inner_loop):
+            loss, rforce_ratio, rforce_clip_ratio, surr_loss = self.surrogate(
+                    self.policy_nn, old_probs, states, actions, rewards, self.clip_surrogate
+            )
+            loss = -1*loss
             self.optimizer.zero_grad()      # Set gradients to zero to avoid overlaps
             loss.backward()                 # Perform Gradient Descent
             self.optimizer.step()
             
             # Store into stats dictionary
-            self.stats_dict['loss'].append(loss)
-            self.stats_dict['beta'].append(self.beta)
+            self.stats_dict['loss'].append(float(loss))
+            self.stats_dict['beta_decay'].append(float(self.beta))
+            self.stats_dict['reinforce_ratio'].append(float(rforce_ratio))
+            self.stats_dict['reinforce_clip_ratio'].append(float(rforce_ratio))
+            self.stats_dict['surrogate_ratio'].append(float(surr_loss))
             
             del loss
     
         self.beta *= self.beta_decay
-        self.epsilon_clip *= .999
+        self.epsilon_clip *= self.epsilon_clip_decay
         
         
         if ((episode_num+1)%self.save_at_episode) == 0:
             torch.save(self.policy_nn, os.path.join(self.save_model_path, '%s.policy'%str(episode_num+1)))
+            cmn.dump_json(self.save_stats_path, self.stats_dict)
         
         return rewards
     

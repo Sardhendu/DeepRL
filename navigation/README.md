@@ -17,7 +17,7 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    shape. 
    
 ### Implemented Functionality:
-   * Buffer (Memory): Experience Replay and Priority Experience Replay [TODO]
+   * Buffer (Memory): Experience Replay and Priority Experience Replay.
    * Agent: DQN (Deep Q network) and DDQN (Double Deep Q Network)
    * Neural Network Architecture: Multilayer Neural network (Vector Environemnt) and Convolution Neural Networks 
    (Visual Environment)

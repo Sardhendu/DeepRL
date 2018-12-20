@@ -12,11 +12,14 @@ class Model(nn.Module):
     def __init__(self, net_name='net1'):
         """
         
-            input = tranjectories [batch_size, num_channels, img_h, img_w]
+            input = tranjectories [horizon, num_channels, img_h, img_w]
                     num_channels = 2
                     img_h = 80
                     img_w = 80
-        :param net_name:
+                    
+            output = actions probabilities [horizon, 1]
+            
+        :param net_name:    Name of the Neural architecture to use
         
             The network will simply output a probability value, that would suggest the
         """
@@ -37,6 +40,7 @@ class Model(nn.Module):
             raise ValueError('Only net1 and net2 excepted ....')
         
     def net1(self):
+        print ('[Model] Initializing net 1')
         self.conv1 = nn.Conv2d(in_channels=2, out_channels=4, kernel_size=6, stride=2, bias=False)
         # 38x38x4 to 9x9x32
         self.conv2 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=6, stride=4)
@@ -56,6 +60,7 @@ class Model(nn.Module):
 
         :return:
         """
+        print('[Model] Initializing net 2')
         self.conv1 = nn.Conv2d(in_channels=2, out_channels=4, kernel_size=7, stride=2, bias=False)
         # 38x38x4 to 9x9x32
         self.conv2 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=4, stride=4)
@@ -72,26 +77,17 @@ class Model(nn.Module):
     
     def forward_net1(self, x):
         x = F.relu(self.conv1(x))
-        print(x.shape)
         x = F.relu(self.conv2(x))
-        print(x.shape)
         x = x.view(-1, self.size)
-        print(x.shape)
         x = F.relu(self.fc1(x))
-        print(x.shape)
         return self.sig(self.fc2(x))
     
     def forward_net2(self, x):
         x = F.relu(self.conv1(x))
-        print(x.shape)
         x = F.relu(self.conv2(x))
-        print(x.shape)
         x = F.relu(self.conv3(x))
-        print(x.shape)
         x = x.view(-1, self.size)
-        print(x.shape)
         x = F.relu(self.fc1(x))
-        print(x.shape)
         return self.sig(self.fc2(x))
     
     def forward(self, x):

@@ -37,12 +37,12 @@ def preprocess_batch(images, bkg_color = np.array([144, 72, 17])):
 
 
 
-def collect_trajectories(envs, policy, tmax, n, nrand=5):
+def collect_trajectories(envs, policy, horizon, num_parallel_env, nrand=5):
     """
 
     :param envs:         A parallel environment object
     :param policy:       Model -> Neural network that defines a policy
-    :param tmax:         How many state-action samples in a trajectory
+    :param horizon:      Num of state-action samples in a trajectory
     :param n:            Number of parallel environments to sample trajetories
     :param nrand:        Perform few random steps
     :return:
@@ -56,14 +56,14 @@ def collect_trajectories(envs, policy, tmax, n, nrand=5):
     envs.reset()
     
     # start all parallel agents
-    envs.step([1]*n)
+    envs.step([1]*num_parallel_env)
     
     # Perform nrand random steps
     for j in range(nrand):
-        frame1, reward1, _, _ = envs.step(np.random.choice([RIGHTFIRE, LEFTFIRE],n))
-        frame2, reward2, _, _ = envs.step([0]*n)
+        frame1, reward1, _, _ = envs.step(np.random.choice([RIGHTFIRE, LEFTFIRE], num_parallel_env))
+        frame2, reward2, _, _ = envs.step([0]* num_parallel_env)
     
-    for t in range(tmax):
+    for t in range(horizon):
         # prepare the input
         # preprocess_batch properly converts two frames into
         # shape (n, 2, 80, 80), the proper input for the policy
@@ -75,13 +75,13 @@ def collect_trajectories(envs, policy, tmax, n, nrand=5):
         action_probs = policy(batch_input).squeeze().cpu().detach().numpy()
 
         # Assign Random actions to each state
-        action = np.where(np.random.rand(n) < action_probs, RIGHTFIRE, LEFTFIRE)
+        action = np.where(np.random.rand(num_parallel_env) < action_probs, RIGHTFIRE, LEFTFIRE)
         action_probs = np.where(action == RIGHTFIRE, action_probs, 1.0 - action_probs)
 
         # advance the game (0=no action)
         # we take one action and skip game forward
         frame1, reward1, is_done, _ = envs.step(action)
-        frame2, reward2, is_done, _ = envs.step([0]*n)
+        frame2, reward2, is_done, _ = envs.step([0]*num_parallel_env)
         
         reward = reward1 + reward2
         # print(reward1, reward2)
@@ -115,7 +115,7 @@ def debug():
     envs = parallelEnv('PongDeterministic-v4', n=4, seed=12345)
 
     policy = Model()
-    prob, state, action, reward = collect_trajectories(envs, policy, tmax=100)
+    prob, state, action, reward = collect_trajectories(envs, policy, horizon=100)
     print (prob)
     
 # debug()
