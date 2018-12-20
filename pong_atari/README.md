@@ -1,10 +1,12 @@
 [//]: # (Image References)
 
-[image1]: https://user-images.githubusercontent.com/10624937/42135619-d90f2f28-7d12-11e8-8823-82b970a54d7e.gif "Trained Agent"
+[image1]: https://github.com/Sardhendu/DeepRL/blob/master/pong_atari/images/pong-v0.gif "Trained Agent"
 
 Play Pong
 -----------
 Train an agent to play Pong using pixels.  
+
+![Trained Agent][image1]
 
 ### Description:
 This project is aimed to teach a reinforcement learning "REINFORCE" agent to play Pong (atari) using pixels. Reinforce are policy gradient methods in which the agent directly optimizes for the policy. This repo contains the vanila "REINFORCE" algorithm and other enhancements such as Importance Sampling and Proximal Policy Optimization.
