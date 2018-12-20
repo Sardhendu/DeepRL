@@ -17,4 +17,6 @@ This project is aimed to teach a reinforcement learning "REINFORCE" agent to pla
    * Proximal Policy Optimization: Used to overcome poor approximation between Old and New policies.
 
 
+### Reference:
 
+* Udacity Deep Reinforcement Learning : [Repository](https://github.com/udacity/deep-reinforcement-learning)
