@@ -1,5 +1,4 @@
 
-import numpy as np
 import torch
 
 from torch import nn
@@ -93,10 +92,4 @@ class Model(nn.Module):
     def forward(self, x):
         return self.forward_func(x)
     
-        
-
-def debug():
-    model = Model(net_name='net2')
-    dat = np.random.random((5, 2, 80, 80))
-    a = model.forward(x = torch.tensor(dat, dtype=torch.float32, device=device))
-    print(a.shape)
+    

@@ -28,7 +28,7 @@ class Agent:
         self.epsilon_clip_decay = args.EPSILON_CLIP_DECAY
         self.trajectory_inner_loop = args.TRAJECTORY_INNER_LOOP_CNT
 
-        self.save_at_episode = 100
+        self.save_after_episodes = args.SAVE_AFTER_EPISODES
         self.save_model_path = args.CHECKPOINT_PATH
         self.save_stats_path = args.STATS_JSON_PATH
         
@@ -131,7 +131,11 @@ class Agent:
             reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - self.epsilon_clip, 1 + self.epsilon_clip)
             surrogate_loss = torch.min(reinforce_ratio * rewards, reinforce_clip_ratio * rewards)
         else:
-            surrogate_loss = (new_action_probs / old_action_probs)*rewards
+            reinforce_ratio = new_action_probs / old_action_probs
+            reinforce_clip_ratio = torch.tensor(
+                    np.array([0, 0], dtype=np.float32), dtype=torch.float32, device=device
+            )
+            surrogate_loss = reinforce_ratio*rewards
         # print(torch.mean(old_action_probs), torch.mean(new_action_probs), torch.mean(loss))
         
         # For regularization Regularization Cross-entropy loss: -(ylog(h) + (1-y)log(1-h)):
@@ -166,19 +170,24 @@ class Agent:
             self.optimizer.step()
             
             # Store into stats dictionary
-            self.stats_dict['loss'].append(float(loss))
+            self.stats_dict['loss'].append(-1*float(loss))
             self.stats_dict['beta_decay'].append(float(self.beta))
             self.stats_dict['reinforce_ratio'].append(float(rforce_ratio))
             self.stats_dict['reinforce_clip_ratio'].append(float(rforce_ratio))
             self.stats_dict['surrogate_ratio'].append(float(surr_loss))
             
+            
             del loss
     
         self.beta *= self.beta_decay
         self.epsilon_clip *= self.epsilon_clip_decay
+
+        # get the average reward of the parallel environments
+        total_rewards = np.sum(rewards, axis=0)
+        average_reward = np.mean(total_rewards)
+        self.stats_dict['rewards'].append(average_reward)
         
-        
-        if ((episode_num+1)%self.save_at_episode) == 0:
+        if ((episode_num+1)%self.save_after_episodes) == 0:
             torch.save(self.policy_nn, os.path.join(self.save_model_path, '%s.policy'%str(episode_num+1)))
             cmn.dump_json(self.save_stats_path, self.stats_dict)
         

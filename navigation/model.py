@@ -26,8 +26,10 @@ class QNetwork(nn.Module):
         
         if network_name == 'net1':
             self.net1(state_size, action_size, seed)
+            self.forward_func = self.forward_net1
         elif network_name == 'net2':
             self.net2(state_size, action_size, seed)
+            self.forward_func = self.forward_net2
         else:
             raise ValueError('Network Name not Understood')
         
@@ -61,12 +63,8 @@ class QNetwork(nn.Module):
         :return:
             Outputs the relu activation for the final layer.
         '''
-        if self.network_name == 'net1':
-            return self.forward_net1(x)
-        elif self.network_name == 'net2':
-            return self.forward_net2(x)
-        else:
-            raise ValueError('Proper net name required')
+        return self.forward_func(x)
+
         
 
 

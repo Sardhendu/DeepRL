@@ -61,7 +61,7 @@ def collect_trajectories(envs, policy, horizon, num_parallel_env, nrand=5):
     # Perform nrand random steps
     for j in range(nrand):
         frame1, reward1, _, _ = envs.step(np.random.choice([RIGHTFIRE, LEFTFIRE], num_parallel_env))
-        frame2, reward2, _, _ = envs.step([0]* num_parallel_env)
+        frame2, reward2, _, _ = envs.step([0] * num_parallel_env)
     
     for t in range(horizon):
         # prepare the input
@@ -72,7 +72,7 @@ def collect_trajectories(envs, policy, horizon, num_parallel_env, nrand=5):
         # probs will only be used as the pi_old
         # no gradient propagation is needed
         # so we move it to the cpu
-        action_probs = policy(batch_input).squeeze().cpu().detach().numpy()
+        action_probs = policy.forward(batch_input).squeeze().cpu().detach().numpy()
 
         # Assign Random actions to each state
         action = np.where(np.random.rand(num_parallel_env) < action_probs, RIGHTFIRE, LEFTFIRE)

@@ -42,4 +42,3 @@ class Reinforce:
             timer.update(e + 1)
         
         timer.finish()
-        return avg_rewards
