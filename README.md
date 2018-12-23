@@ -20,4 +20,17 @@ Train an agent to navigate (and collect bananas!) in a large, square world.
        - **`1`** - move backward.
        - **`2`** - turn left.
        - **`3`** - turn right.
+       
+       
+       
+       
+## To install with Docker [In Progress]
+
+Create a docker Image:
+
+    docker build --tag deep_rl .
+
+Run the Image:
+
+    docker sam$ docker run -it --name deep_rl deep_rl
  
