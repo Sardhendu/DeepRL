@@ -34,3 +34,11 @@ Run the Image:
 
     docker sam$ docker run -it --name deep_rl deep_rl
  
+ 
+ ### TODO:
+ 1. Dueling Network Architectures with DQN
+ 2. n-step Bootstrap.
+ 3. Lambda return (n-step bootstrap)
+ 4. Actor-Critic
+
+ 

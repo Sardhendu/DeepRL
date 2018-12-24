@@ -18,9 +18,7 @@ Implementations
     2) *Hard-update:* In hard update the agent updates the weights of the target-network after every t-timstep. 
         * θ_target = θ_local
     
-2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. To be precise
- in Double-Q-network while learning the action is chosen by the local network but values corresponding to the action 
- are fetched from the target network. 
+2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. In vanilla DQN we use one network (local_network) to select and evaluate an action. This can potentially lead to overoptimistic value estimates. Inorder to mitigate this Double-Q-network eas introduced, that uses one network (local network) to choose the action and uses another network (target network) to evaluate actions. 
  
 3. **Priority-Experience-Replay Buffer:** The idea for a Priority experience replay buffer is to sample experiences 
 with higher TD error more often. Some experiences are more important than others. Since the experience replay buffer 
