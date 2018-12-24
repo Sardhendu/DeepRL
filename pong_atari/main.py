@@ -1,22 +1,51 @@
 from DeepRL.pong_atari.parallel_env import parallelEnv
 from DeepRL.pong_atari.agent import Agent
+import torch
 import numpy as np
-
+from DeepRL.pong_atari.utils import preprocess_batch
 # widget bar to display progress
-
+import gym
 import progressbar as pb
+from JSAnimation.IPython_display import display_animation
+from matplotlib import animation
+import matplotlib.pyplot as plt
+from IPython.display import display
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+RIGHTFIRE = 4
+LEFTFIRE = 5
 
 
+def animate_frames(frames):
+    plt.axis('off')
+    
+    # color option for plotting
+    # use Greys for greyscale
+    cmap = None if len(frames[0].shape) == 3 else 'Greys'
+    patch = plt.imshow(frames[0], cmap=cmap)
+    
+    fanim = animation.FuncAnimation(plt.gcf(), \
+                                    lambda x: patch.set_data(frames[x]), frames=len(frames), interval=30)
+    
+    display(display_animation(fanim, default_mode='once'))
+    
+    
 class Reinforce:
-    def __init__(self, args):
+    def __init__(self, args, mode='train'):
         self.args = args
-        
-        self.num_episodes = args.NUM_EPISODES
-        self.horizon = args.HORIZON
-        self.num_parallel_env = args.NUM_PARALLEL_ENV
 
-        env = parallelEnv('PongDeterministic-v4', self.num_parallel_env, seed=12345)
-        self.agent = Agent(args, env)
+        if mode == 'train':
+            print ('[Train] In training mode ....')
+            self.num_episodes = args.NUM_EPISODES
+            self.horizon = args.HORIZON
+            self.num_parallel_env = args.NUM_PARALLEL_ENV
+            self.env = parallelEnv('PongDeterministic-v4', self.num_parallel_env, seed=12345)
+            self.agent = Agent(args, self.env)
+        else:
+            print('[Train] In testing mode ....')
+            self.env = gym.make('PongDeterministic-v4')
+            
         
     def train(self):
         widget = ['training loop: ', pb.Percentage(), ' ', pb.Bar(), ' ', pb.ETA()]
@@ -42,3 +71,47 @@ class Reinforce:
             timer.update(e + 1)
         
         timer.finish()
+        
+    def test(self, num_timesteps=2000, nrand=5, preprocess_output=None):
+        policy_nn = torch.load(self.args.CHECKPOINT_PATH)
+        self.env.reset()
+        
+        self.env.step(1)
+        
+        # Warm-up: Perform some random states in teh beginning
+        for _ in range(0, nrand):
+            frame1, reward1, done, _ = self.env.step(np.random.choice([RIGHTFIRE, LEFTFIRE]))
+            frame2, reward2, done, _ = self.env.step(0)
+
+        anim_frames = []
+        
+        for t in range(0, num_timesteps):
+            frame_batch = preprocess_batch([frame1, frame2])
+            action_prob = policy_nn.forward(frame_batch)
+
+            # If action probability is greater than 0.5 then chose
+            action = RIGHTFIRE if np.random.random() < action_prob else LEFTFIRE
+            
+            frame1, reward1, done, _ = self.env.step(action)
+            feame2, reward2, done, _ = self.env.step(0)
+
+            if preprocess_output is None:
+                anim_frames.append(frame1)
+            else:
+                anim_frames.append(preprocess(frame1))
+
+            if done:
+                break
+
+        self.env.close()
+
+        animate_frames(anim_frames)
+        return
+
+            
+        
+            
+        
+        
+    
+    

@@ -40,6 +40,10 @@ class Agent:
         self.policy_nn = Model(args.NET_NAME).to(device)
         self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)
 
+        # Actions
+        self.RIGHTFIRE = 4
+        self.LEFTFIRE = 5
+
     def get_actions_probs(self, policy, states):
         """
         
@@ -98,8 +102,7 @@ class Agent:
             5. Clipped Surrogate:
                 Follows the proximal policy optimization
         """
-        RIGHTFIRE = 4
-        LEFTFIRE = 5
+       
         
         rewards = np.asarray(rewards)  # [h, n]
         
@@ -122,7 +125,7 @@ class Agent:
         # Run Policy Network and fetch output probabilities
         new_action_probs = self.get_actions_probs(policy, states)  # [H, N]
         # new_action_probs = torch.tensor(new_action_probs, dtype=torch.float, device=device)
-        new_action_probs = torch.where(actions == RIGHTFIRE, new_action_probs, 1.0 - new_action_probs)
+        new_action_probs = torch.where(actions == self.RIGHTFIRE, new_action_probs, 1.0 - new_action_probs)
         
         # Loss is  *sum(reward_future_norm * d_theta(log(at|st)) or = *sum(reward_future_norm * p(at|st) / p(at|st)
         # loss = rewards*torch.log(new_action_probs)
@@ -192,4 +195,12 @@ class Agent:
             cmn.dump_json(self.save_stats_path, self.stats_dict)
         
         return rewards
+    
+    
+    # def play(self, inp_batch):
+    #     action_prob = self.policy_nn.forward(inp_batch)
+    #
+    #     # If action probability is greater than 0.5 then chose
+    #     action = self.RIGHTFIRE if np.random.random() < action_prob else self.LEFTFIRE
+    #     return action
     
