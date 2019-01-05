@@ -18,7 +18,7 @@ Start Jupyter Notebook:
 
 [image1]: https://user-images.githubusercontent.com/10624937/42135619-d90f2f28-7d12-11e8-8823-82b970a54d7e.gif "Trained Agent"
 
-Project 1: Navigation [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/navigation)
+Project 1: Navigation [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/src/navigation)
 -----------
 
 Train an agent to navigate (and collect bananas!) in a large, square world.  
