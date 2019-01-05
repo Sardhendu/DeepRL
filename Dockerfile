@@ -28,27 +28,32 @@ RUN apt-get update \
         python3-tk \
         libopenblas-base  \
         libatlas-dev  \
-        cython3  \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
+
 # Upgrade pip
 RUN python3 -m pip install --upgrade pip
+RUN pip install --ignore-installed pip
+
+# Install Pytorch
+RUN git clone https://github.com/pytorch/vision.git && cd vision && pip install -v .
 
 # Install Python packages - Step 1
 COPY requirements.txt /tmp/
-#RUN python3 -m pip install -r /tmp/requirements.txt
+RUN python3 -m pip install -r /tmp/requirements.txt
+
+# Install OPEN AI GYM environments
+RUN git clone https://github.com/openai/gym.git \
+&& cd gym \
+&& pip install -e '.[atari]' \
+&& pip install -e '.[classic_control]' \
+&& pip install -e '.[box2d]'
+
+# Command for jupyter themes (comment if you dont use jupyter themes)
+RUN jt -t onedork -fs 11 -altp -tfs 12 -nfs 12 -ofs 10 -cellw 95% -T -cursc r
 
 # Add directory
 RUN mkdir /ds
 
-# Enable jupyter widgets
-#RUN jupyter nbextension enable --py --sys-prefix widgetsnbextension
-
 ENV DEBIAN_FRONTEND teletype
-
-# Jupyter notebook with virtual frame buffer for rendering
-#CMD cd /ds \
-#    && xvfb-run -s "-screen 0 1400x900x24" \
-#    /usr/local/bin/jupyter notebook \
-#    --port=8888 --ip=0.0.0.0 --allow-root

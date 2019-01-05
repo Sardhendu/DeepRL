@@ -49,3 +49,9 @@ def Plot():
         return plot(plot_list, plot_names, nrows, ncols)
     
     return stats_plot
+
+
+a = 10
+b = 20
+
+print(a+b)

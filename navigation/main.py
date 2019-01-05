@@ -8,7 +8,7 @@ from DeepRL.navigation.agent import DDQNAgent, DDQNAgentPER
 
 
 class CollectBanana:
-    def __init__(self, env_type='vector', mode='train'):
+    def __init__(self, args, env_type='vector', mode='train'):
         """
         This is a wrapper on top of the brain environment that provides useful function to render the environment
         call very similar to like calling the open AI gym environement.
@@ -19,9 +19,11 @@ class CollectBanana:
         """
         self.env_type = env_type
         if env_type == 'vector':
-            self.base_env = UnityEnvironment("./Banana.app")
+            print('adasdasd ', args.BANANA_VECTOR_ENV_PATH)
+            self.base_env = UnityEnvironment(args.BANANA_VECTOR_ENV_PATH)
+
         elif env_type == 'visual':
-            self.base_env = UnityEnvironment("./VisualBanana.app")
+            self.base_env = UnityEnvironment(args.BANANA_VISUAL_ENV_PATH)
         else:
             raise ValueError('Env Name not understood ....')
         # get the default brain

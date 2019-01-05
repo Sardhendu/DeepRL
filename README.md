@@ -1,3 +1,19 @@
+
+## To install with Docker
+
+Create a docker Image:
+
+    docker build --tag deep_rl .
+
+Run the Image, expose Jupyter Notebook at port 8888 and mount the working directory:
+    
+    docker run -it -p 8888:8888 -v /path/to/your/local/workspace:/workspace/DeepRL --name deep_rl deep_rl
+    
+Start Jupyter Notebook:
+    
+    jupyter notebook --no-browser --allow-root --ip 0.0.0.0
+    
+
 [//]: # (Image References)
 
 [image1]: https://user-images.githubusercontent.com/10624937/42135619-d90f2f28-7d12-11e8-8823-82b970a54d7e.gif "Trained Agent"
@@ -24,15 +40,7 @@ Train an agent to navigate (and collect bananas!) in a large, square world.
        
        
        
-## To install with Docker [In Progress]
 
-Create a docker Image:
-
-    docker build --tag deep_rl .
-
-Run the Image:
-
-    docker sam$ docker run -it --name deep_rl deep_rl
  
  
  ### TODO:

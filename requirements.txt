@@ -1,22 +1,31 @@
 # Basic
 pandas
 jupyter
+jupyterlab
 scipy
 matplotlib
 
 # Deep learning
-tensorflow
-keras
-h5py
-keras-rl
-baselines
-tensorforce
+#tensorflow
+#keras
+#h5py
+#keras-rl
+#baselines
+#tensorforce
 
-# AI Gym requirements
-PyOpenGL
-piglet
-pyglet
+# Open AI Gym requirements
+#PyOpenGL
+#piglet
+#pyglet
+#gym
+cffi
+cython
+
+# Unity Environment
+unityagents
 
 # Other
 JSAnimation
 ipywidgets
+jupyterthemes
+progressbar
