@@ -5,11 +5,13 @@ from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn.functional as F
-from navigation.buffer import MemoryER, MemoryPER
-from navigation import utils
+
+from navigation import model
 
 import commons as cmn
-from navigation import model
+from buffer import MemoryER, MemoryPER
+
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -271,7 +273,7 @@ class DDQNAgent(RLAgent):
         # Soft-update the target network.
         if self.SOFT_UPDATE:
             if self.DECAY_TAU:
-                tau = utils.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
+                tau = cmn.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
             else:
                 tau = self.TAU
         
@@ -384,45 +386,8 @@ class DDQNAgentPER(RLAgent):
         if self.SOFT_UPDATE:
             # print('Going to Soft Update: ...............', self.t_step)
             if self.DECAY_TAU:
-                tau = utils.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
+                tau = cmn.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
             else:
                 tau = self.TAU
             
             self.soft_update(self.local_network, self.target_network, tau)
-
-
-def debug_act():
-    from p1_navigation.src.config import Config
-    import numpy as np
-    Agent(Config).act(np.random.random((37,)), Config.EPSILON)
-
-
-def debug_learn():
-    from p1_navigation.src.config import Config
-    import numpy as np
-    state = np.random.random((10, 5))
-    action = np.tile(np.arange(4), 10)
-    np.random.shuffle(action)
-    action = action[0:10]
-    reward = np.tile([1, 0, -1], 10)
-    np.random.shuffle(reward)
-    reward = reward[0:10]
-    state_next = np.random.random((10, 5))
-    done = np.tile(0, 10)
-    
-    # print(state)
-    # print(state_next)
-    # print(action)
-    # print(reward)
-    # print(done)
-    experience = [state, action.reshape(10, 1),
-                  reward.reshape(10, 1), state_next, done.reshape(10, 1)]
-    # print(experience)
-    
-    Config.STATE_SIZE = 5
-    Config.ACTION_SIZE = 4
-    Agent(Config).learn(experience)
-
-
-# debug_learn()
-

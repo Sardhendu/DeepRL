@@ -1,8 +1,8 @@
-from DeepRL.pong_atari.parallel_env import parallelEnv
-from DeepRL.pong_atari.agent import Agent
+from pong_atari.parallel_env import parallelEnv
+from pong_atari.agent import Agent
 import torch
 import numpy as np
-from DeepRL.pong_atari.utils import preprocess_batch
+from pong_atari.utils import preprocess_batch
 # widget bar to display progress
 import gym
 import progressbar as pb
@@ -25,8 +25,7 @@ def animate_frames(frames):
     cmap = None if len(frames[0].shape) == 3 else 'Greys'
     patch = plt.imshow(frames[0], cmap=cmap)
     
-    fanim = animation.FuncAnimation(plt.gcf(), \
-                                    lambda x: patch.set_data(frames[x]), frames=len(frames), interval=30)
+    fanim = animation.FuncAnimation(plt.gcf(), lambda x: patch.set_data(frames[x]), frames=len(frames), interval=30)
     
     display(display_animation(fanim, default_mode='once'))
     
@@ -98,7 +97,7 @@ class Reinforce:
             if preprocess_output is None:
                 anim_frames.append(frame1)
             else:
-                anim_frames.append(preprocess(frame1))
+                anim_frames.append(preprocess_batch(frame1))
 
             if done:
                 break

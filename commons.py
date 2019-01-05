@@ -4,6 +4,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.style.use('ggplot')
 
+
+
+def exp_decay(alpha, decay_rate, iteration_num, min_value=0):
+   alpha_d = alpha * np.exp(-decay_rate*iteration_num)
+   return max(min_value, alpha_d)
+
 def dump_json(file_path, data):
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
@@ -51,7 +57,17 @@ def Plot():
     return stats_plot
 
 
-a = 10
-b = 20
 
-print(a+b)
+
+def debug():
+    TAU = 0.1
+    decay_rate = 0.003
+    TAU_MIN = 0.01
+    a_ = []
+    for i in range(0, 2000):
+        a = exp_decay(TAU, decay_rate, i, TAU_MIN)
+        a_.append(a)
+    
+    import matplotlib.pyplot as plt
+    plt.plot(a_)
+    plt.show()

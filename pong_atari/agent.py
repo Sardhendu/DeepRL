@@ -6,9 +6,10 @@ import torch
 
 import torch.optim as optim
 from collections import defaultdict
-from DeepRL import commons as cmn
-from DeepRL.pong_atari.model import Model
-from DeepRL.pong_atari.utils import collect_trajectories
+import commons as cmn
+
+from pong_atari.model import Model
+from pong_atari.utils import collect_trajectories
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
