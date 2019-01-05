@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from unityagents import UnityEnvironment
 
-from DeepRL.navigation.agent import DDQNAgent, DDQNAgentPER
+from navigation.agent import DDQNAgent, DDQNAgentPER
 
 
 class CollectBanana:
