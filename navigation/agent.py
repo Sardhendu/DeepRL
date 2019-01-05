@@ -110,7 +110,7 @@ class RLAgent:
             return np.argmax(action_values.cpu().data.numpy())
         else:
             return np.random.choice(np.arange(self.ACTION_SIZE))
-    
+
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
@@ -217,7 +217,6 @@ class DDQNAgent(RLAgent):
             # print(len(self.memory), self.args.BUFFER_SIZE)
             if len(self.memory) > self.BATCH_SIZE:
                 experiences = self.memory.sample()
-                # print('asdafadfadfsdfs ', experiences)
                 self.learn(experiences, self.GAMMA, episode_num)
         
         if self.HARD_UPDATE:

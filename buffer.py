@@ -9,7 +9,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class MemoryER:
     """Fixed-size buffer to store experience tuples."""
     
-    def __init__(self, buffer_size, batch_size, seed):
+    def __init__(self, buffer_size, batch_size, seed, action_dtype='long'):
         """Initialize a ReplayBuffer object.
 
         Params
@@ -24,6 +24,7 @@ class MemoryER:
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
+        self.action_dtype = action_dtype
     
     def add(self, state, action, reward, next_state, done):
         """Add a new experience to memory."""
@@ -36,14 +37,15 @@ class MemoryER:
         experiences = random.sample(self.memory, k=self.batch_size)
         
         states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
-        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(
-                device)
-        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(
-                device)
-        next_states = torch.from_numpy(
-                np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
-        dones = torch.from_numpy(
-                np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
+        
+        if self.action_dtype == 'long':
+            actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)
+        elif self.action_dtype == 'float':
+            actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
+            
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
         
         return (states, actions, rewards, next_states, dones)
     
@@ -224,7 +226,7 @@ class MemoryPER(object):  # stored as ( s, a, r, s_ ) in SumTree
     
     absolute_error_upper = 1.  # clipped abs error
     
-    def __init__(self, buffer_size, batch_size, seed):
+    def __init__(self, buffer_size, batch_size, seed, action_dtype='long'):
         # Making the tree
         """
         Remember that our tree is composed of a sum tree that contains the priority scores at his leaf
@@ -237,6 +239,7 @@ class MemoryPER(object):  # stored as ( s, a, r, s_ ) in SumTree
         self.tree = SumTree(buffer_size)
         self.batch_size = batch_size
         self.len = 1
+        self.action_dtype = action_dtype
     
     def add(self, state, action, reward, next_state, done):
         """
@@ -327,7 +330,7 @@ class MemoryPER(object):  # stored as ( s, a, r, s_ ) in SumTree
                 action_b = np.zeros((self.batch_size, 1), dtype=type(data[1]))
                 reward_b = np.zeros((self.batch_size, 1), dtype=type(data[2]))
                 state_next_b = np.zeros((self.batch_size, len(data[3])), dtype=np.float)
-                done_b = np.zeros((self.batch_size, 1), dtype=type(data[3]))
+                done_b = np.zeros((self.batch_size, 1), dtype=type(data[4]))
             
             state_b[i, :] = data[0]
             action_b[i, :] = data[1]
@@ -338,8 +341,12 @@ class MemoryPER(object):  # stored as ( s, a, r, s_ ) in SumTree
         # print('b_ISWeights: ', b_ISWeights)
         b_ISWeights /= max_wi
         # print('b_ISWeightdcdcdcs: ', b_ISWeights)
+        
         states = torch.from_numpy(state_b).float().to(device)
-        actions = torch.from_numpy(action_b).long().to(device)
+        if self.action_dtype == 'long':
+            actions = torch.from_numpy(action_b).long().to(device)
+        elif self.action_dtype == 'float':
+            actions = torch.from_numpy(action_b).float().to(device)
         rewards = torch.from_numpy(reward_b).float().to(device)
         next_states = torch.from_numpy(state_next_b).float().to(device)
         dones = torch.from_numpy(done_b.astype(np.uint8)).float().to(device)

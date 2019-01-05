@@ -56,6 +56,13 @@ class ContinuousControl:
         else:
             raise ValueError('Environment type not understood ....')
         
+    def step(self, action):
+        self.env_info = self.base_env.step(action)[self.brain_name]  # send the action to the environment
+        self.get_state()
+        reward = self.env_info.rewards[0]
+        done = self.env_info.local_done[0]
+        return self.state, reward, done, None
+        
     def close(self):
         self.base_env.close()
         
@@ -72,25 +79,42 @@ class DDPG:
         scores = []  # list containing scores from each episode
         scores_window = deque(maxlen=self.score_window_size)  # last score_window_size scores
 
-        eps = self.args.EPSILON  # initialize epsilon
+        # eps = self.args.EPSILON  # initialize epsilon
         running_time_step = 0
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             state = self.env.reset()
             score = 0
             for t in range(self.args.NUM_TIMESTEPS):
-                action = np.random.randn(self.env.num_agents, self.env.action_size)#self.agent.act(state, eps)
-                print(action)
+                action = self.agent.act(state)#np.random.randn(self.env.num_agents, self.env.action_size)#self.agent.act(
+                # state, eps)
+                next_state, reward, done, _ = self.env.step(action)
+                self.agent.step(state, action, reward, next_state, done, i_episode, running_time_step)
+                # print(action)
+                # print('state_next: ', state_next)
+                running_time_step += 1
+                
+                if running_time_step == 300:
+                    break
+                
+                
     
 class Config:
     NUM_EPISODES = 20
-    NUM_TIMESTEPS = 20
+    NUM_TIMESTEPS = 2000
     
     EPSILON = 1
-    BUFFER_SIZE = 20
+    BUFFER_SIZE = 100000
     BATCH_SIZE = 64
 
     STATE_SIZE = 33
     ACTION_SIZE = 4
+    
+    LEARNING_RATE = 0.0001
+    UPDATE_AFTER_STEP = 4
+    GAMMA = 0.995
+    
+    HARD_UPDATE = False
+    HARD_UPDATE_FREQUENCY = 1000
     
 env = ContinuousControl(mode='train')
 dqn = DDPG(Config, env).train()
