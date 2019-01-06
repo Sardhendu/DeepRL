@@ -50,8 +50,8 @@ class DDPGCritic(nn.Module):
         self.fc3 = nn.Linear(64, 1)
         
     
-    def forward(self, x, action_dist):
-        x = F.relu(self.fc1(x))
+    def forward(self, state, action_dist):
+        x = F.relu(self.fc1(state))
         x = torch.cat((x, action_dist), dim=1)
         x = F.relu(self.fc2(x))
         return self.fc3(x)

@@ -3,11 +3,13 @@ import random
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from src.buffer import MemoryER
-
 from src.continuous_control.model import DDPGActor, DDPGCritic, Optimize
 
-#TODO: remove epsilon and add noise as per the DDPG Paper
+# TODO: Reset the noise to after every episode
+# TODO: Add Batchbnormalization
+# TODO: Density plot showing estimated Q values versus observed returns sampled from test (Refer DDPG Paper)
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -48,18 +50,19 @@ class RLAgent:
         self.HARD_UPDATE_FREQUENCY = self.args.HARD_UPDATE_FREQUENCY
         self.BUFFER_SIZE = self.args.BUFFER_SIZE
         self.BATCH_SIZE = self.args.BATCH_SIZE
+        self.TAU = self.args.TAU
         
         
         # Create the Local Network and Target Network for the Actor
-        self.local_actor = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=34)
-        self.target_actor = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=98)
-        self.local_actor_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(self.local_actor.parameters())
+        self.actor_local = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=34)
+        self.actor_target = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=98)
+        self.actor_local_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(self.actor_local.parameters())
 
         # Create the Local Network and Target Network for the Critic
-        self.local_critic = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=294)
-        self.target_critic = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=551)
-        self.local_critic_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(
-                self.local_critic.parameters())
+        self.critic_local = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=294)
+        self.critic_target = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=551)
+        self.critic_local_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(
+                self.critic_local.parameters())
 
         self.t_step = 0
 
@@ -83,10 +86,10 @@ class RLAgent:
         # print('4223423 ', state)
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         state.requires_grad = False
-        self.local_actor.eval()
+        self.actor_local.eval()
         with torch.no_grad():
-            actions = self.local_actor.forward(state).cpu().data.numpy()
-        self.local_actor.train()
+            actions = self.actor_local.forward(state).cpu().data.numpy()
+        self.actor_local.train()
         return actions
 
     def soft_update(self, local_model, target_model, tau):
@@ -158,7 +161,6 @@ class DDPGAgent(RLAgent):
     def step(self, state, action, reward, next_state, done, episode_num, running_time_step):
         
         # Store experience to the replay buffer
-        print('actionactionaction ', action)
         self.memory.add(state, action, reward, next_state, done)
         
         # When the memory is atleast full as the batch size and if the step num is a factor of UPDATE_AFTER_STEP
@@ -173,21 +175,68 @@ class DDPGAgent(RLAgent):
         
         if self.HARD_UPDATE:
             if ((running_time_step + 1) % self.HARD_UPDATE_FREQUENCY) == 0:
-                self.hard_update(self.local_actor, self.target_actor)
-                self.hard_update(self.local_critic, self.target_critic)
+                self.hard_update(self.actor_local, self.actor_target)
+                self.hard_update(self.critic_local, self.critic_target)
                 
     def learn(self, experiences, gamma, episode_num, running_time_step):
+        """
+        
+        :param experiences:
+        :param gamma:
+        :param episode_num:
+        :param running_time_step:
+        :return:
+        
+        """
         print('Learning .... ', episode_num, running_time_step)
-        states, actions, rewards, states_next, dones = experiences
-        print(states.shape)
-        print('')
-        print(actions)
-        print('')
-        print(rewards)
-        print(states_next)
-        print('')
-        print(dones)
-        pass
+        states, actions, rewards, next_states, dones = experiences
+        
+        
+        #-------------------- Optimize Critic -----------------------#
+        # The Critic is similar to TD-learning functionality, So we have to optimize it using the value function.
+        # Run the critic network for the state to output a value given <state, action>
+        expected_returns = self.critic_local.forward(states, actions) # We can also use critic_target to find the value as we did for DDQN
+        # We use the target network following the concept of Fixed-Q-network
+        next_actions = self.actor_target(next_states)
+        target_values = self.critic_target.forward(next_states, next_actions)
+        target_returns = rewards + (gamma*target_values * (1-dones))
+        
+        # optimize the critic loss
+        critic_loss = F.mse_loss(expected_returns, target_returns)
+        self.critic_local.zero_grad()
+        critic_loss.backward()
+        self.critic_local_optimizer.step()
+
+        # -------------------- Optimize Actor -----------------------#
+        # The actor is similar to the Policy-gradient functionality. So we optimize it using sampled policy gradient.
+        # Run the actor network for the current state to predict actions. We can not use "actions" from
+        # experiences stored in the buffer because these actions might have been generated by the actor network
+        # with old weights.
+        actions_pred = self.actor_local(states)
+        actor_loss = -self.critic_local(states, actions_pred)
+        actor_loss = -self.critic_local(states, actions_pred).mean()
+        print (actor_loss)
+        print(actor_loss.mean())
+
+        # ---------------------- Soft Update ------------------------#
+        self.soft_update(self.critic_local, self.critic_target, self.TAU)
+        self.soft_update(self.actor_local, self.actor_target, self.TAU)
+        
+        
+        
+       
+        
+        # rewards + gamma
+        # print(values)
+        # print(states.shape)
+        # print('')
+        # print(actions)
+        # print('')
+        # print(rewards)
+        # print(states_next)
+        # print('')
+        # print(dones)
+        # pass
     
     # def learn(self):
     
