@@ -6,13 +6,29 @@ matplotlib.style.use('ggplot')
 
 
 
+
+
+
 def exp_decay(alpha, decay_rate, iteration_num, min_value=0):
    alpha_d = alpha * np.exp(-decay_rate*iteration_num)
    return max(min_value, alpha_d)
 
+
+import json
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
+        
 def dump_json(file_path, data):
     with open(file_path, 'w') as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4, cls=MyEncoder)
         
 def read_json(file_path):
     with open(file_path, 'r') as f:

@@ -102,7 +102,6 @@ class Agent:
             5. Clipped Surrogate:
                 Follows the proximal policy optimization
         """
-       
         
         rewards = np.asarray(rewards)  # [h, n]
         

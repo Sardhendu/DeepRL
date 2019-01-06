@@ -1,14 +1,19 @@
+
+import os
 import copy
 import random
+from collections import defaultdict
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+
+import src.commons as cmn
 from src.buffer import MemoryER
 from src.continuous_control.model import DDPGActor, DDPGCritic, Optimize
 
 # TODO: Reset the noise to after every episode
-# TODO: Add Batchbnormalization
+# TODO: Add Batchnormalization
 # TODO: Density plot showing estimated Q values versus observed returns sampled from test (Refer DDPG Paper)
 
 
@@ -44,13 +49,28 @@ class RLAgent:
 
         self.ACTION_SIZE = self.args.ACTION_SIZE
         self.BATCH_SIZE = self.args.BATCH_SIZE
-        self.UPDATE_AFTER_STEP = self.args.UPDATE_AFTER_STEP
+        self.SOFT_UPDATE = self.args.SOFT_UPDATE
+        self.SOFT_UPDATE_FREQUENCY = self.args.SOFT_UPDATE_FREQUENCY
         self.GAMMA = self.args.GAMMA
         self.HARD_UPDATE = self.args.HARD_UPDATE
         self.HARD_UPDATE_FREQUENCY = self.args.HARD_UPDATE_FREQUENCY
         self.BUFFER_SIZE = self.args.BUFFER_SIZE
         self.BATCH_SIZE = self.args.BATCH_SIZE
         self.TAU = self.args.TAU
+        self.DECAY_TAU = self.args.DECAY_TAU
+        self.TAU_DECAY_RATE = self.args.TAU_DECAY_RATE
+        self.TAU_MIN = self.args.TAU_MIN
+
+        self.NOISE = self.args.NOISE
+        self.EPSILON_GREEDY = self.args.EPSILON_GREEDY
+        self.EPSILON = self.args.EPSILON_GREEDY
+        self.EPSILON_DECAY = self.args.EPSILON_DECAY
+        self.EPSILON_MIN = self.args.EPSILON_MIN
+
+        self.LEARNING_FREQUENCY = self.args.LEARNING_FREQUENCY
+    
+        self.STATS_JSON_PATH = self.args.STATS_JSON_PATH
+        self.CHECKPOINT_DIR = self.args.CHECKPOINT_DIR
         
         
         # Create the Local Network and Target Network for the Actor
@@ -63,8 +83,9 @@ class RLAgent:
         self.critic_target = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=551)
         self.critic_local_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(
                 self.critic_local.parameters())
+        
 
-        self.t_step = 0
+        self.stats_dict = defaultdict(list)
 
     def action(self, state):
         """
@@ -157,40 +178,51 @@ class DDPGAgent(RLAgent):
         # Clip the actions to the the min and max limit of action probs
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
         return actions
-        
+
     def step(self, state, action, reward, next_state, done, episode_num, running_time_step):
-        
+    
         # Store experience to the replay buffer
         self.memory.add(state, action, reward, next_state, done)
-        
+    
         # When the memory is atleast full as the batch size and if the step num is a factor of UPDATE_AFTER_STEP
         # then we learn the parameters of the network
         # Update the weights of local network and soft-update the weighs of the target_network
-        self.t_step = (self.t_step + 1) % self.UPDATE_AFTER_STEP  # Run from {1->UPDATE_AFTER_STEP}
+        # self.t_step = (self.t_step + 1) % self.UPDATE_AFTER_STEP  # Run from {1->UPDATE_AFTER_STEP}
         # print('[Step] Current Step is: ', self.tstep)
-        if self.t_step == 0:
+    
+        if ((running_time_step + 1) % self.LEARNING_FREQUENCY) == 0:
             if len(self.memory) > self.BATCH_SIZE:
                 experiences = self.memory.sample()
-                self.learn(experiences, self.GAMMA, episode_num, running_time_step)
-        
+                self.learn(experiences, self.GAMMA)
+    
         if self.HARD_UPDATE:
             if ((running_time_step + 1) % self.HARD_UPDATE_FREQUENCY) == 0:
                 self.hard_update(self.actor_local, self.actor_target)
                 self.hard_update(self.critic_local, self.critic_target)
+    
+        elif self.SOFT_UPDATE:
+            if ((running_time_step + 1) % self.SOFT_UPDATE_FREQUENCY) == 0:
+            
+                if self.DECAY_TAU:
+                    tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
+                else:
+                    tau = self.TAU
+            
+                self.soft_update(self.critic_local, self.critic_target, tau)
+                self.soft_update(self.actor_local, self.actor_target, tau)
+        else:
+            raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
                 
-    def learn(self, experiences, gamma, episode_num, running_time_step):
+    def learn(self, experiences, gamma):
         """
         
         :param experiences:
         :param gamma:
-        :param episode_num:
-        :param running_time_step:
         :return:
         
         """
-        print('Learning .... ', episode_num, running_time_step)
+        # print('Learning .... ', episode_num, running_time_step)
         states, actions, rewards, next_states, dones = experiences
-        
         
         #-------------------- Optimize Critic -----------------------#
         # The Critic is similar to TD-learning functionality, So we have to optimize it using the value function.
@@ -200,9 +232,9 @@ class DDPGAgent(RLAgent):
         next_actions = self.actor_target(next_states)
         target_values = self.critic_target.forward(next_states, next_actions)
         target_returns = rewards + (gamma*target_values * (1-dones))
+        critic_loss = F.mse_loss(expected_returns, target_returns)
         
         # optimize the critic loss
-        critic_loss = F.mse_loss(expected_returns, target_returns)
         self.critic_local.zero_grad()
         critic_loss.backward()
         self.critic_local_optimizer.step()
@@ -213,30 +245,45 @@ class DDPGAgent(RLAgent):
         # experiences stored in the buffer because these actions might have been generated by the actor network
         # with old weights.
         actions_pred = self.actor_local(states)
-        actor_loss = -self.critic_local(states, actions_pred)
         actor_loss = -self.critic_local(states, actions_pred).mean()
-        print (actor_loss)
-        print(actor_loss.mean())
 
-        # ---------------------- Soft Update ------------------------#
-        self.soft_update(self.critic_local, self.critic_target, self.TAU)
-        self.soft_update(self.actor_local, self.actor_target, self.TAU)
-        
-        
-        
-       
-        
-        # rewards + gamma
-        # print(values)
-        # print(states.shape)
-        # print('')
-        # print(actions)
-        # print('')
-        # print(rewards)
-        # print(states_next)
-        # print('')
-        # print(dones)
-        # pass
+        # optimize the Actor loss
+        self.actor_local.zero_grad()
+        actor_loss.backward()
+        self.actor_local_optimizer.step()
+
+        # Store into stats dictionary
+        self.critic_loss.append(abs(float(critic_loss)))
+        self.actor_loss.append(abs(float(actor_loss)))
+        self.rewards.append(rewards.cpu().data.numpy())
+
+    def reset(self):
+        if self.NOISE:
+            self.noise.reset()
+        else:
+            raise ValueError('Something is wrong with reset..')
     
-    # def learn(self):
-    
+        self.rewards = []
+        self.critic_loss = []
+        self.actor_loss = []
+        
+    def save_stats(self):
+        self.stats_dict['rewards'].append([np.mean(self.rewards), np.var(self.rewards)])
+        self.stats_dict['actor_loss'].append([np.mean(self.actor_loss), np.var(self.actor_loss)])
+        self.stats_dict['critic_loss'].append([np.mean(self.critic_loss), np.var(self.critic_loss)])
+        cmn.dump_json(self.STATS_JSON_PATH, self.stats_dict)
+        
+    def save_checkpoints(self, episode_num):
+        e_num = episode_num
+        torch.save(
+            self.actor_local.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'actor_local_%s.pth' % str(e_num))
+        )
+        torch.save(
+            self.actor_target.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'actor_target_%s.pth' % str(e_num))
+        )
+        torch.save(
+            self.critic_local.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'critic_local_%s.pth' % str(e_num))
+        )
+        torch.save(
+            self.critic_target.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'critic_target_%s.pth' % str(e_num))
+        )
