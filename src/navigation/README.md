@@ -23,7 +23,7 @@ This project is aimed to make a reinforcement learning DQN agent learn to collec
    (Visual Environment)
    * Fixed-Q-targets: With soft update and Hard Update   
 
-#### Getting Started: [Jump to the Report](https://github.com/Sardhendu/DeepRL/blob/master/src/navigation/report.md)
+#### Getting Started: [Jump to the Report](https://github.com/Sardhendu/DeepRL/blob/master/src/navigation/REPORT.md)
 1) **Vector Environment:** Download the environment from one of the links below. Select the environment that matches your 
  operating system:
     - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P1/Banana/Banana_Linux.zip)
