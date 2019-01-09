@@ -14,6 +14,7 @@ from src.continuous_control.model import DDPGActor, DDPGCritic, Optimize
 
 # TODO: Reset the noise to after every episode
 # TODO: Add Batchnormalization
+# TODO: Try scaling the input features
 # TODO: Density plot showing estimated Q values versus observed returns sampled from test (Refer DDPG Paper)
 
 
@@ -74,20 +75,21 @@ class RLAgent:
         
         
         # Create the Local Network and Target Network for the Actor
-        self.actor_local = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=34)
-        self.actor_target = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=98)
-        self.actor_local_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(self.actor_local.parameters())
+        self.actor_local = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
+        self.actor_target = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
+        self.actor_local_optimizer = Optimize(learning_rate=self.args.ACTOR_LEARNING_RATE).adam(
+                self.actor_local.parameters())
 
         # Create the Local Network and Target Network for the Critic
-        self.critic_local = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=294)
-        self.critic_target = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=551)
-        self.critic_local_optimizer = Optimize(learning_rate=self.args.LEARNING_RATE).adam(
+        self.critic_local = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
+        self.critic_target = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
+        self.critic_local_optimizer = Optimize(learning_rate=self.args.CRITIC_LEARNING_RATE).adam(
                 self.critic_local.parameters())
         
 
         self.stats_dict = defaultdict(list)
 
-    def action(self, state):
+    def act(self, state):
         """
         
         :param state:
@@ -96,22 +98,12 @@ class RLAgent:
         ### Actor Action: Actons are chosen by actor
         Select action "at" according to the current policy and the exploration noise
         at = μ(st | θμ) + Nt
-        
-        Here
-            --> θμ : Weights of Actor Network
-            --> Nt : Are the random noise that jitters the action distribution introducing randomness to for exploration
             
         """
         
         # Set the state to evaluation get actions and reset network to training phase
         # print('4223423 ', state)
-        state = torch.from_numpy(state).float().unsqueeze(0).to(device)
-        state.requires_grad = False
-        self.actor_local.eval()
-        with torch.no_grad():
-            actions = self.actor_local.forward(state).cpu().data.numpy()
-        self.actor_local.train()
-        return actions
+        pass
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
@@ -151,14 +143,14 @@ class RLAgent:
     
     
 class DDPGAgent(RLAgent):
-    def __init__(self, args, env_type, seed):
+    def __init__(self, args, env_type, seed=2):
         super().__init__(args, env_type)
 
         # Get the Noise
-        self.noise = OUNoise(size=self.ACTION_SIZE, seed=seed)
+        self.noise = OUNoise(size=self.ACTION_SIZE, seed=2)
 
         # Create The memory Buffer
-        self.memory = MemoryER(self.BUFFER_SIZE, self.BATCH_SIZE, seed, action_dtype='float')
+        self.memory = MemoryER(self.BUFFER_SIZE, self.BATCH_SIZE, 912, action_dtype='float')
         
     def act(self, state, add_noise=True, action_value_range=(-1, 1)):
         """
@@ -168,21 +160,33 @@ class DDPGAgent(RLAgent):
         :return:                    The action value distribution with added noise (if required)
         
         at = μ(st | θμ) + Nt
+        
+        Here
+            --> θμ : Weights of Actor Network
+            --> Nt : Are the random noise that jitters the action distribution introducing randomness to for exploration
         """
+        state = torch.from_numpy(state).float().to(device)
+        state.requires_grad = False
+        self.actor_local.eval()
+        with torch.no_grad():
+            actions = self.actor_local.forward(state).cpu().data.numpy()
+        self.actor_local.train()
+
+        # print(actions)
         # Add Random noise to the action space distribution to foster exploration
         if add_noise:
-            actions = self.action(state) + self.noise.sample()
-        else:
-            actions = self.action(state)
+            actions = actions + self.noise.sample()
         
         # Clip the actions to the the min and max limit of action probs
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
         return actions
 
-    def step(self, state, action, reward, next_state, done, episode_num, running_time_step):
+    def step(self, states, actions, rewards, next_states, dones, episode_num, running_time_step):
     
         # Store experience to the replay buffer
-        self.memory.add(state, action, reward, next_state, done)
+        for state, action, reward, next_state, done in zip(states, actions, rewards, next_states, dones):
+            # print('adding: ', state.shape, action.shape, reward, next_state.shape, done)
+            self.memory.add(state, action, reward, next_state, done)
     
         # When the memory is atleast full as the batch size and if the step num is a factor of UPDATE_AFTER_STEP
         # then we learn the parameters of the network
@@ -202,6 +206,7 @@ class DDPGAgent(RLAgent):
     
         elif self.SOFT_UPDATE:
             if ((running_time_step + 1) % self.SOFT_UPDATE_FREQUENCY) == 0:
+                # print('Performing soft-update at: ', running_time_step)
             
                 if self.DECAY_TAU:
                     tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
@@ -228,6 +233,7 @@ class DDPGAgent(RLAgent):
         # The Critic is similar to TD-learning functionality, So we have to optimize it using the value function.
         # Run the critic network for the state to output a value given <state, action>
         expected_returns = self.critic_local.forward(states, actions) # We can also use critic_target to find the value as we did for DDQN
+        # print(expected_returns)
         # We use the target network following the concept of Fixed-Q-network
         next_actions = self.actor_target(next_states)
         target_values = self.critic_target.forward(next_states, next_actions)
@@ -235,7 +241,7 @@ class DDPGAgent(RLAgent):
         critic_loss = F.mse_loss(expected_returns, target_returns)
         
         # optimize the critic loss
-        self.critic_local.zero_grad()
+        self.critic_local_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_local_optimizer.step()
 
@@ -248,7 +254,7 @@ class DDPGAgent(RLAgent):
         actor_loss = -self.critic_local(states, actions_pred).mean()
 
         # optimize the Actor loss
-        self.actor_local.zero_grad()
+        self.actor_local_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_local_optimizer.step()
 
@@ -258,6 +264,7 @@ class DDPGAgent(RLAgent):
         self.rewards.append(rewards.cpu().data.numpy())
 
     def reset(self):
+        # print('Resetting agent .....')
         if self.NOISE:
             self.noise.reset()
         else:
@@ -268,9 +275,14 @@ class DDPGAgent(RLAgent):
         self.actor_loss = []
         
     def save_stats(self):
-        self.stats_dict['rewards'].append([np.mean(self.rewards), np.var(self.rewards)])
-        self.stats_dict['actor_loss'].append([np.mean(self.actor_loss), np.var(self.actor_loss)])
-        self.stats_dict['critic_loss'].append([np.mean(self.critic_loss), np.var(self.critic_loss)])
+        self.stats_dict['rewards'].append([np.mean(self.rewards), np.std(self.rewards)])
+        self.stats_dict['actor_loss'].append([np.mean(self.actor_loss), np.std(self.actor_loss)])
+        self.stats_dict['critic_loss'].append([np.mean(self.critic_loss), np.std(self.critic_loss)])
+        # print('')
+        # print(np.mean(self.rewards), np.var(self.rewards))
+        # print(np.mean(self.actor_loss), np.var(self.actor_loss))
+        # print(np.mean(self.critic_loss), np.var(self.critic_loss))
+        
         cmn.dump_json(self.STATS_JSON_PATH, self.stats_dict)
         
     def save_checkpoints(self, episode_num):
