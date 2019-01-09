@@ -127,7 +127,7 @@ def ddpg(n_episodes=5000, max_t=2000):
         scores = np.zeros(config.num_agents)
         
         for pp in range(max_t):
-            print (pp)
+            # print (pp)
             actions = agent.act(states)
             # print(actions)
             env_info = env.step(actions)[brain_name]

@@ -9,6 +9,11 @@ Notes:
 
 
 """
+
+import torch
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 class ContinuousControl:
     def __init__(self, env_type='single', mode='train'):
         """
@@ -82,14 +87,14 @@ class DDPG:
         self.args = args
         self.score_window_size = 100
         
-        self.agent = DDPGAgent(args, env_type, seed=2)
+        self.agent = DDPGAgent(args, env_type)
         
     def train(self, target_score=30, verbose=1):
         all_scores = []  # list containing scores from each episode
         scores_window = deque(maxlen=self.score_window_size)  # last score_window_size scores
 
         # eps = self.args.EPSILON  # initialize epsilon
-        running_time_step = 0
+        running_time_step = 1
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             states = self.env.reset()
             # print(states.shape)
@@ -138,6 +143,9 @@ class DDPG:
         
         self.env.close()
 
+from src.exploration import OUNoise
+from src.continuous_control.model import Actor, Critic
+from src.buffer import MemoryER
 
 class Config:
     import os
@@ -196,8 +204,24 @@ class Config:
     STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
     CHECKPOINT_DIR = base_dir
     
-# Config()
     
+    # Lambda Functions:
+    EXPLORATION_POLICY_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
+    ACTOR_NETWORK_FN = lambda: Actor(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
+            device)
+    ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
+    
+    CRITIC_NETWORK_FN = lambda: Critic(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
+            device)
+    CRITIC_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.CRITIC_LEARNING_RATE)
+    
+    MEMORY_FN = lambda: MemoryER(Config.BUFFER_SIZE, Config.BATCH_SIZE, seed=2, action_dtype='float')
+    
+# Config()
+# from src.continuous_control.model import Actor
+# STATE_SIZE = 2
+# ACTION_SIZE = 2
+# ACTOR_NETWORK = lambda: Actor(STATE_SIZE, ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
 env = ContinuousControl(env_type='multi', mode='train')
 dqn = DDPG(Config, env).train()
         

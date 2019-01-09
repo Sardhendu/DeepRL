@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 import src.commons as cmn
 from src.buffer import MemoryER
-from src.continuous_control.model import DDPGActor, DDPGCritic, Optimize
+from src.continuous_control.model import Optimize
 
 # TODO: Reset the noise to after every episode
 # TODO: Add Batchnormalization
@@ -20,71 +20,51 @@ from src.continuous_control.model import DDPGActor, DDPGCritic, Optimize
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-class OUNoise:
-    """Ornstein-Uhlenbeck process."""
-
-    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.2):
-        """Initialize parameters and noise process."""
-        self.mu = mu * np.ones(size)
-        self.theta = theta
-        self.sigma = sigma
-        self.seed = random.seed(seed)
-        self.reset()
-
-    def reset(self):
-        """Reset the internal state (= noise) to mean (mu)."""
-        self.state = copy.copy(self.mu)
-
-    def sample(self):
-        """Update internal state and return it as a noise sample."""
-        x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
-        self.state = x + dx
-        return self.state
 
 
 class RLAgent:
     def __init__(self, args, env_type):
-        self.args = args
         self.env_type = env_type
 
-        self.ACTION_SIZE = self.args.ACTION_SIZE
-        self.BATCH_SIZE = self.args.BATCH_SIZE
-        self.SOFT_UPDATE = self.args.SOFT_UPDATE
-        self.SOFT_UPDATE_FREQUENCY = self.args.SOFT_UPDATE_FREQUENCY
-        self.GAMMA = self.args.GAMMA
-        self.HARD_UPDATE = self.args.HARD_UPDATE
-        self.HARD_UPDATE_FREQUENCY = self.args.HARD_UPDATE_FREQUENCY
-        self.BUFFER_SIZE = self.args.BUFFER_SIZE
-        self.BATCH_SIZE = self.args.BATCH_SIZE
-        self.TAU = self.args.TAU
-        self.DECAY_TAU = self.args.DECAY_TAU
-        self.TAU_DECAY_RATE = self.args.TAU_DECAY_RATE
-        self.TAU_MIN = self.args.TAU_MIN
+        self.ACTION_SIZE = args.ACTION_SIZE
+        self.BATCH_SIZE = args.BATCH_SIZE
+        self.SOFT_UPDATE = args.SOFT_UPDATE
+        self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
+        self.GAMMA = args.GAMMA
+        self.HARD_UPDATE = args.HARD_UPDATE
+        self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
+        self.BUFFER_SIZE = args.BUFFER_SIZE
+        self.BATCH_SIZE = args.BATCH_SIZE
+        self.TAU = args.TAU
+        self.DECAY_TAU = args.DECAY_TAU
+        self.TAU_DECAY_RATE = args.TAU_DECAY_RATE
+        self.TAU_MIN = args.TAU_MIN
 
-        self.NOISE = self.args.NOISE
-        self.EPSILON_GREEDY = self.args.EPSILON_GREEDY
-        self.EPSILON = self.args.EPSILON_GREEDY
-        self.EPSILON_DECAY = self.args.EPSILON_DECAY
-        self.EPSILON_MIN = self.args.EPSILON_MIN
+        self.NOISE = args.NOISE
+        self.EPSILON_GREEDY = args.EPSILON_GREEDY
+        self.EPSILON = args.EPSILON_GREEDY
+        self.EPSILON_DECAY = args.EPSILON_DECAY
+        self.EPSILON_MIN = args.EPSILON_MIN
 
-        self.LEARNING_FREQUENCY = self.args.LEARNING_FREQUENCY
+        self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
     
-        self.STATS_JSON_PATH = self.args.STATS_JSON_PATH
-        self.CHECKPOINT_DIR = self.args.CHECKPOINT_DIR
+        self.STATS_JSON_PATH = args.STATS_JSON_PATH
+        self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
         
         
         # Create the Local Network and Target Network for the Actor
-        self.actor_local = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
-        self.actor_target = DDPGActor(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
-        self.actor_local_optimizer = Optimize(learning_rate=self.args.ACTOR_LEARNING_RATE).adam(
-                self.actor_local.parameters())
+        self.actor_local = args.ACTOR_NETWORK_FN()
+        self.actor_target = args.ACTOR_NETWORK_FN()
+        self.actor_local_optimizer = args.ACTOR_OPTIMIZER_FN(self.actor_local.parameters())
 
         # Create the Local Network and Target Network for the Critic
-        self.critic_local = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
-        self.critic_target = DDPGCritic(self.args.STATE_SIZE, self.args.ACTION_SIZE, seed=2).to(device)
-        self.critic_local_optimizer = Optimize(learning_rate=self.args.CRITIC_LEARNING_RATE).adam(
-                self.critic_local.parameters())
+        self.critic_local = args.CRITIC_NETWORK_FN()
+        self.critic_target = args.CRITIC_NETWORK_FN()
+        self.critic_local_optimizer = args.CRITIC_OPTIMIZER_FN(self.critic_local.parameters())
+        
+        #### Methods
+        self.exploration_policy = args.EXPLORATION_POLICY_FN()
+        self.memory = args.MEMORY_FN()
         
 
         self.stats_dict = defaultdict(list)
@@ -143,14 +123,9 @@ class RLAgent:
     
     
 class DDPGAgent(RLAgent):
-    def __init__(self, args, env_type, seed=2):
+    def __init__(self, args, env_type):
         super().__init__(args, env_type)
 
-        # Get the Noise
-        self.noise = OUNoise(size=self.ACTION_SIZE, seed=2)
-
-        # Create The memory Buffer
-        self.memory = MemoryER(self.BUFFER_SIZE, self.BATCH_SIZE, 912, action_dtype='float')
         
     def act(self, state, add_noise=True, action_value_range=(-1, 1)):
         """
@@ -174,12 +149,12 @@ class DDPGAgent(RLAgent):
 
         # print(actions)
         # Add Random noise to the action space distribution to foster exploration
-        if add_noise:
-            actions = actions + self.noise.sample()
+        actions += self.exploration_policy.sample()
         
         # Clip the actions to the the min and max limit of action probs
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
         return actions
+
 
     def step(self, states, actions, rewards, next_states, dones, episode_num, running_time_step):
     
@@ -193,30 +168,34 @@ class DDPGAgent(RLAgent):
         # Update the weights of local network and soft-update the weighs of the target_network
         # self.t_step = (self.t_step + 1) % self.UPDATE_AFTER_STEP  # Run from {1->UPDATE_AFTER_STEP}
         # print('[Step] Current Step is: ', self.tstep)
-    
-        if ((running_time_step + 1) % self.LEARNING_FREQUENCY) == 0:
+        learning_flag = 0
+        if (running_time_step % self.LEARNING_FREQUENCY) == 0:
             if len(self.memory) > self.BATCH_SIZE:
                 experiences = self.memory.sample()
                 self.learn(experiences, self.GAMMA)
+
+                learning_flag = 1
     
-        if self.HARD_UPDATE:
-            if ((running_time_step + 1) % self.HARD_UPDATE_FREQUENCY) == 0:
-                self.hard_update(self.actor_local, self.actor_target)
-                self.hard_update(self.critic_local, self.critic_target)
-    
-        elif self.SOFT_UPDATE:
-            if ((running_time_step + 1) % self.SOFT_UPDATE_FREQUENCY) == 0:
-                # print('Performing soft-update at: ', running_time_step)
-            
-                if self.DECAY_TAU:
-                    tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
-                else:
-                    tau = self.TAU
-            
-                self.soft_update(self.critic_local, self.critic_target, tau)
-                self.soft_update(self.actor_local, self.actor_target, tau)
-        else:
-            raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
+        if learning_flag == 1:
+            if self.HARD_UPDATE:
+                if (running_time_step % self.HARD_UPDATE_FREQUENCY) == 0:
+                    self.hard_update(self.actor_local, self.actor_target)
+                    self.hard_update(self.critic_local, self.critic_target)
+        
+            elif self.SOFT_UPDATE:
+                if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
+                    # print('Performing soft-update at: ', running_time_step)
+                
+                    if self.DECAY_TAU:
+                        tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
+                    else:
+                        tau = self.TAU
+                
+                    self.soft_update(self.critic_local, self.critic_target, tau)
+                    self.soft_update(self.actor_local, self.actor_target, tau)
+            else:
+                raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
+
                 
     def learn(self, experiences, gamma):
         """
@@ -243,6 +222,7 @@ class DDPGAgent(RLAgent):
         # optimize the critic loss
         self.critic_local_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
         self.critic_local_optimizer.step()
 
         # -------------------- Optimize Actor -----------------------#
@@ -262,13 +242,11 @@ class DDPGAgent(RLAgent):
         self.critic_loss.append(abs(float(critic_loss)))
         self.actor_loss.append(abs(float(actor_loss)))
         self.rewards.append(rewards.cpu().data.numpy())
+        
 
     def reset(self):
-        # print('Resetting agent .....')
-        if self.NOISE:
-            self.noise.reset()
-        else:
-            raise ValueError('Something is wrong with reset..')
+        self.exploration_policy.reset()
+        
     
         self.rewards = []
         self.critic_loss = []
