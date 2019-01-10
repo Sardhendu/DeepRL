@@ -1,7 +1,12 @@
 import numpy as np
 from collections import deque
 from unityagents import UnityEnvironment
+
+
 from src.continuous_control.agent import DDPGAgent
+from src.exploration import OUNoise
+from src.continuous_control.model import Actor, Critic
+from src.buffer import MemoryER
 
 """
 Notes:
@@ -61,12 +66,7 @@ class ContinuousControl:
         return self.state
 
     def get_state(self):
-        if self.env_type == 'single':
-            self.state = self.env_info.vector_observations
-        elif self.env_type == 'multi':
-            self.state = self.env_info.vector_observations
-        else:
-            raise ValueError('Environment type not understood ....')
+        self.state = self.env_info.vector_observations
         
     def step(self, action):
         # print(self.brain_name)
@@ -97,16 +97,11 @@ class DDPG:
         running_time_step = 1
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             states = self.env.reset()
-            # print(states.shape)
             self.agent.reset()
             scores = np.zeros(self.env.num_agents)
             for t in range(self.args.NUM_TIMESTEPS):
                 # print(t)
-                actions = self.agent.act(states)#np.random.randn(self.env.num_agents,
-                # print(actions)
-                # self.env.action_size)#self.agent.act(
-                # state, eps)
-                # print('23424234234234234 ', actions.shape)
+                actions = self.agent.act(states)
                 next_states, rewards, dones, _ = self.env.step(actions)
                 # print(next_states.shape, rewards, dones)
                 self.agent.step(states, actions, rewards, next_states, dones, i_episode, running_time_step)
@@ -143,9 +138,6 @@ class DDPG:
         
         self.env.close()
 
-from src.exploration import OUNoise
-from src.continuous_control.model import Actor, Critic
-from src.buffer import MemoryER
 
 class Config:
     import os
@@ -154,7 +146,7 @@ class Config:
     ACTION_SIZE = 4
     NUM_EPISODES = 2000
     NUM_TIMESTEPS = 1000
-
+    
     # MODEL PARAMETERS
     SEED = 0
     BUFFER_SIZE = int(1e05)
@@ -169,13 +161,13 @@ class Config:
     
     if (NOISE and EPSILON_GREEDY) or (not NOISE and not EPSILON_GREEDY):
         raise ValueError('Only one exploration policy either NOISE or EPSILON_GREEDY si to be chosen ..')
-
+    
     # LEARNING PARAMETERS
     ACTOR_LEARNING_RATE = 0.0001
     CRITIC_LEARNING_RATE = 0.0005
-    GAMMA = 0.99           # Discounts
+    GAMMA = 0.99  # Discounts
     LEARNING_FREQUENCY = 4
-
+    
     # WEIGHTS UPDATE PARAMENTER
     SOFT_UPDATE = True
     TAU = 0.001  # Soft update parameter for target_network
@@ -192,36 +184,33 @@ class Config:
     
     if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
+    
+    
+    
+    # Lambda Functions:
+    EXPLORATION_POLICY_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
+    ACTOR_NETWORK_FN = lambda: Actor(Config.ACTION_SIZE, Config.STATE_SIZE, (512, 256), seed=2).to(device)#lambda: Actor(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+    ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
+    
+    CRITIC_NETWORK_FN = lambda: Critic(Config.ACTION_SIZE, Config.STATE_SIZE,  (512, 256), seed=2).to(device)#lambda: Critic(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+    CRITIC_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.CRITIC_LEARNING_RATE)
+    
+    MEMORY_FN = lambda: MemoryER(Config.BUFFER_SIZE, Config.BATCH_SIZE, seed=2, action_dtype='float')
+
 
     # USE PATH
-    MODEL_NAME = 'model_1'
+    MODEL_NAME = 'model_2'
     model_dir = os.path.join(os.path.abspath(os.path.join(__file__, "../../..")), 'models')
-    base_dir = os.path.join(model_dir, 'continuous_control', '%s'%(MODEL_NAME))
+    base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
     if not os.path.exists(base_dir):
         print('creating .... ', base_dir)
         os.makedirs(base_dir)
     #
     STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
     CHECKPOINT_DIR = base_dir
-    
-    
-    # Lambda Functions:
-    EXPLORATION_POLICY_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
-    ACTOR_NETWORK_FN = lambda: Actor(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
-            device)
-    ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
-    
-    CRITIC_NETWORK_FN = lambda: Critic(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
-            device)
-    CRITIC_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.CRITIC_LEARNING_RATE)
-    
-    MEMORY_FN = lambda: MemoryER(Config.BUFFER_SIZE, Config.BATCH_SIZE, seed=2, action_dtype='float')
-    
-# Config()
-# from src.continuous_control.model import Actor
-# STATE_SIZE = 2
-# ACTION_SIZE = 2
-# ACTOR_NETWORK = lambda: Actor(STATE_SIZE, ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+
+
+
 env = ContinuousControl(env_type='multi', mode='train')
 dqn = DDPG(Config, env).train()
         

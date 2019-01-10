@@ -19,7 +19,7 @@ class MemoryER:
             batch_size (int): size of each training batch
             seed (int): random seed
         """
-        print('[INIT] Initializing Replay Buffer .... .... ....')
+        print('[INIT] Initializing Experience Replay Buffer .... .... ....')
         self.memory = deque(maxlen=buffer_size)  # FIFO
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])

@@ -9,8 +9,6 @@ import torch
 import torch.nn.functional as F
 
 import src.commons as cmn
-from src.buffer import MemoryER
-from src.continuous_control.model import Optimize
 
 # TODO: Reset the noise to after every episode
 # TODO: Add Batchnormalization
