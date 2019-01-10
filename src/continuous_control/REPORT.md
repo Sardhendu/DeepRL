@@ -30,10 +30,10 @@ In DQN, the network outputs an action-value function Q(s, a) for a discrete acti
     <table>
 	    <tr>
     	    <td style="padding:5px">
-        	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/actor.png" width="300" height="400"><figcaption><center>Actor Network</center></figcaption>
+        	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/actor.png" width="400" height="400"><figcaption><center>Actor Network</center></figcaption>
       	    </td>
              <td style="padding:5px">
-            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/critic.png" width="300" height="400"><figcaption></center>Critic Network </center></figcaption>
+            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/critic.png" width="400" height="400"><figcaption></center>Critic Network </center></figcaption>
              </td>
         </tr>
     </table>
