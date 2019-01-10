@@ -47,7 +47,7 @@ Train an agent to navigate (and collect bananas!) in a large, square world.
  Project 2: Continuous Control [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/src/continuous_control)
 -----------
 
-The goal of your agent (double-jointed arm) is to maintain its position at the target location for as many time steps as possible 
+Train anagent (double-jointed arm) is to maintain its position at the target location for as many time steps as possible 
 
 ![Trained Agent][image2]
  

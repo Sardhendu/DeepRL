@@ -163,6 +163,7 @@ class Critic(nn.Module):
         """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
         xs = self.normalizer(states)
         xs = self.gate(self.layers[0](xs))
+        print(xs.shape)
         x = torch.cat((xs, actions), dim=1)
         for i in range(1, len(self.layers)):
             x = self.gate(self.layers[i](x))

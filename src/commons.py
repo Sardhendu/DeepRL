@@ -45,6 +45,9 @@ def Plot():
         ax = ax.ravel()
         
         for idx, (values, name) in enumerate(zip(plot_list, plot_names)):
+            values = np.array(values)
+            if values.ndim > 1:
+                values = values[:,0]
             ax[idx].plot(values, 'o', color='blue', markersize=2)
             ax[idx].set_title(name)
             plt.xlabel('timesteps', fontsize=18)

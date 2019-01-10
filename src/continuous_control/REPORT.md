@@ -20,3 +20,105 @@ In DQN, the network outputs an action-value function Q(s, a) for a discrete acti
 **Actor (θμ)**: Approximate policy deterministically (note its not stochastic - no probability distribution) μ(st | θμ) = argmax(a)Q(s,a)
 
 **Critic (θq)**: Evaluates the optimal action value function by using the actor best believed action: Q(s, μ(st;θμ) | θq)
+
+
+#### Network Graph:
+
+###### ACTOR:
+![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/actor.png)
+###### CRITIC:
+![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/critic.png)
+
+
+#### Results:
+
+    
+   With several model configuration, we found that DQN with Soft-update reaches the target score faster when 
+   compared to other mehtods. The banana collection state space is not sufficient (complex enough) to imply if one 
+   method is better than another.
+   
+   * **DQN Soft-update with best Hyper-parameter-configuration:**
+        ```python
+             {
+                class Config:
+                import os
+                # ENVIRONMEMT PARAMETER
+                STATE_SIZE = 33
+                ACTION_SIZE = 4
+                NUM_EPISODES = 2000
+                NUM_TIMESTEPS = 1000
+                
+                # MODEL PARAMETERS
+                SEED = 0
+                BUFFER_SIZE = int(1e05)
+                BATCH_SIZE = 512
+                
+                # Exploration parameter
+                NOISE = True
+                EPSILON_GREEDY = False
+                EPSILON = 1
+                EPSILON_DECAY = 0.995  # Epsilon decay for epsilon greedy policy
+                EPSILON_MIN = 0.01  # Minimum epsilon to reach
+                
+                if (NOISE and EPSILON_GREEDY) or (not NOISE and not EPSILON_GREEDY):
+                    raise ValueError('Only one exploration policy either NOISE or EPSILON_GREEDY si to be chosen ..')
+                
+                # LEARNING PARAMETERS
+                ACTOR_LEARNING_RATE = 0.0001
+                CRITIC_LEARNING_RATE = 0.0005
+                GAMMA = 0.99  # Discounts
+                LEARNING_FREQUENCY = 4
+                
+                # WEIGHTS UPDATE PARAMENTER
+                SOFT_UPDATE = True
+                TAU = 0.001  # Soft update parameter for target_network
+                SOFT_UPDATE_FREQUENCY = 4
+                DECAY_TAU = False
+                TAU_DECAY_RATE = 0.003
+                TAU_MIN = 0.05
+                
+                HARD_UPDATE = False
+                HARD_UPDATE_FREQUENCY = 1000
+                
+                if (SOFT_UPDATE and HARD_UPDATE) or (not SOFT_UPDATE and not HARD_UPDATE):
+                    raise ValueError('Only one of Hard Update and Soft Update is to be chosen ..')
+                
+                if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
+                    raise ValueError('Soft update frequency can not be smaller than the learning frequency')
+                
+                # Lambda Functions:
+                EXPLORATION_POLICY_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
+                ACTOR_NETWORK_FN = lambda: Actor(Config.ACTION_SIZE, Config.STATE_SIZE, (512, 256), seed=2).to(
+                        device)  # lambda: Actor(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
+                # device)
+                ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
+                
+                CRITIC_NETWORK_FN = lambda: Critic(Config.ACTION_SIZE, Config.STATE_SIZE, (512, 256), seed=2).to(
+                        device)  # lambda: Critic(Config.STATE_SIZE, Config.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(
+                # device)
+                CRITIC_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.CRITIC_LEARNING_RATE)
+                
+                MEMORY_FN = lambda: MemoryER(Config.BUFFER_SIZE, Config.BATCH_SIZE, seed=2, action_dtype='float')
+                
+                # USE PATH
+                MODEL_NAME = 'model_1'
+                model_dir =  pth + '/models'
+                base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
+                if not os.path.exists(base_dir):
+                    print('creating .... ', base_dir)
+                    os.makedirs(base_dir)
+                #
+                STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
+                CHECKPOINT_DIR = base_dir
+            
+                       }
+            
+                         Episode 100	Average Score: 1.01
+                         Episode 200	Average Score: 3.73
+                         Episode 300	Average Score: 7.62
+                         Episode 400	Average Score: 10.37
+                         Episode 488	Average Score: 12.94
+                         Environment solved in 489 episodes!	Average Score: 13.01
+         ```    
+            
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/score.png)
