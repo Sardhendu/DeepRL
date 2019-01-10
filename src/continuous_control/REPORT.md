@@ -121,14 +121,14 @@ In DQN, the network outputs an action-value function Q(s, a) for a discrete acti
                 STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
                 CHECKPOINT_DIR = base_dir
             
-                       }
-            
-                         Episode 100	Average Score: 1.01
-                         Episode 200	Average Score: 3.73
-                         Episode 300	Average Score: 7.62
-                         Episode 400	Average Score: 10.37
-                         Episode 488	Average Score: 12.94
-                         Environment solved in 489 episodes!	Average Score: 13.01
+             }
          ```    
             
    ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/score.png)
+   
+   
+Ideas for future improvement:
+-----
+* Experiment with different Network architectures.
+* Use priority replay buffer.
+* Try a large deep network with Actor-Critic heads where Actor and Critics are benifited by parameter sharing.
