@@ -20,7 +20,7 @@ Implementations
    
       * Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>local_network</sub>]
       
-    Using Q(s, a)<sub>local_network</sub> to find target value is not optimal because we would be using same parameters w_local_network} to for target Q(s, a) and expected Q(s, a) and would have high correlaton between the TD target and the weights w<sub>local_network</sub> we are learning. So instead, we use the target network parameters w<sub>target_network</sub> to compute the target Q(s, a) :  
+    Using Q(s, a)<sub>local_network</sub> to find target value is not optimal because we would be using same parameters w<sub>local_network</sub> to for target Q(s, a) and expected Q(s, a) which would have high correlation between the TD target and the weights w<sub>local_network</sub> we are learning. So instead, we use the target network parameters w<sub>target_network</sub> to compute the target Q(s, a) :  
        
       * target Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>target_network</sub>
 
@@ -32,10 +32,11 @@ Implementations
         * θ_target = θ_local
         
       
-  
-
-    
 2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. In vanilla DQN we use one network (local_network) to select and evaluate an action. This can potentially lead to overoptimistic value estimates. Inorder to mitigate this Double-Q-network eas introduced, that uses one network (local network) to choose the action and uses another network (target network) to evaluate actions. 
+
+   The change here is :
+   
+   * target Q(s, a) = reward(s, a) + gamma * max_a [Q(s', a)<sub>target_network</sub>] <sub>local_network</sub>
  
 3. **Priority-Experience-Replay Buffer:** The idea for a Priority experience replay buffer is to sample experiences 
 with higher TD error more often. Some experiences are more important than others. Since the experience replay buffer 
