@@ -12,28 +12,26 @@ Implementations
 ------- 
 1. **Fixed-Q-targets:** The agent has two different implementation for Fixed-Q-targets. 
 
+   In normal scenario we use the local network weights (w) to find the expected Q-value. 
+            
+      * expected Q(s, a) = [wX + b]<sub>local_network</sub>
+      
+   According to Bellman equation the target Q-values are computed by current reward and a discounted return.
+   
+      * Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>local_network</sub>]
+      
+    Using Q(s, a)<sub>local_network</sub> to find target value is not optimal because we would be using same parameters w_local_network} to for target Q(s, a) and expected Q(s, a) and would have high correlaton between the TD target and the weights w<sub>local_network</sub> we are learning. So instead, we use the target network parameters w<sub>target_network</sub> to compute the target Q(s, a) :  
+       
+      * target Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>target_network</sub>
 
    1) *Soft-update:* In soft update the agent updates the weights of the target-network at each learning step (every 
     4th timestep) with a value of TAU.
         * θ_target = τ*θ_local + (1 - τ)*θ_target
         
-        
    2) *Hard-update:* In hard update the agent updates the weights of the target-network after every t-timstep. 
         * θ_target = θ_local
         
-      In normal scenario we use the local network weights (w) to find the 
-      expected Q-value. 
-            
-        expected Q(s, a) = [wX + b]<sub>local_network</sub>
-       
-      According to Bellman equation the target Q-values are computed by
-      current reward and a discounted return.
-        
-        Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>local_network</sub>]
       
-      Using Q(s, a)<sub>local_network</sub> to find target value is not optimal because we would be using same parameters w_local_network} to for target Q(s, a) and expected Q(s, a) and would have high correlaton between the TD target and the weights w<sub>local_network</sub> we are learning. So instead, we use the target network parameters w<sub>target_network</sub> to compute the target Q(s, a) :  
-       
-        target Q(s, a) = reward(s, a) + gamma * max_a[Q(s', a)<sub>target_network</sub>
   
 
     
