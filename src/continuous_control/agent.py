@@ -21,51 +21,66 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class RLAgent:
-    def __init__(self, args, env_type):
+    def __init__(self, args, env_type, mode='train'):
         self.env_type = env_type
+        self.mode = mode
 
-        self.ACTION_SIZE = args.ACTION_SIZE
-        self.BATCH_SIZE = args.BATCH_SIZE
-        self.SOFT_UPDATE = args.SOFT_UPDATE
-        self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
-        self.GAMMA = args.GAMMA
-        self.HARD_UPDATE = args.HARD_UPDATE
-        self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
-        self.BUFFER_SIZE = args.BUFFER_SIZE
-        self.BATCH_SIZE = args.BATCH_SIZE
-        self.TAU = args.TAU
-        self.DECAY_TAU = args.DECAY_TAU
-        self.TAU_DECAY_RATE = args.TAU_DECAY_RATE
-        self.TAU_MIN = args.TAU_MIN
-
-        self.NOISE = args.NOISE
-        self.EPSILON_GREEDY = args.EPSILON_GREEDY
-        self.EPSILON = args.EPSILON_GREEDY
-        self.EPSILON_DECAY = args.EPSILON_DECAY
-        self.EPSILON_MIN = args.EPSILON_MIN
-
-        self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
+        if mode == 'train':
+            self.ACTION_SIZE = args.ACTION_SIZE
+            self.BATCH_SIZE = args.BATCH_SIZE
+            self.SOFT_UPDATE = args.SOFT_UPDATE
+            self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
+            self.GAMMA = args.GAMMA
+            self.HARD_UPDATE = args.HARD_UPDATE
+            self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
+            self.BUFFER_SIZE = args.BUFFER_SIZE
+            self.BATCH_SIZE = args.BATCH_SIZE
+            self.TAU = args.TAU
+            self.DECAY_TAU = args.DECAY_TAU
+            self.TAU_DECAY_RATE = args.TAU_DECAY_RATE
+            self.TAU_MIN = args.TAU_MIN
     
-        self.STATS_JSON_PATH = args.STATS_JSON_PATH
-        self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
+            self.NOISE = args.NOISE
+            self.EPSILON_GREEDY = args.EPSILON_GREEDY
+            self.EPSILON = args.EPSILON_GREEDY
+            self.EPSILON_DECAY = args.EPSILON_DECAY
+            self.EPSILON_MIN = args.EPSILON_MIN
+    
+            self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
         
+            self.STATS_JSON_PATH = args.STATS_JSON_PATH
+            self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
+            
+            
+            # Create the Local Network and Target Network for the Actor
+            self.actor_local = args.ACTOR_NETWORK_FN()
+            self.actor_target = args.ACTOR_NETWORK_FN()
+            self.actor_local_optimizer = args.ACTOR_OPTIMIZER_FN(self.actor_local.parameters())
+    
+            # Create the Local Network and Target Network for the Critic
+            self.critic_local = args.CRITIC_NETWORK_FN()
+            self.critic_target = args.CRITIC_NETWORK_FN()
+            self.critic_local_optimizer = args.CRITIC_OPTIMIZER_FN(self.critic_local.parameters())
+            
+            #### Methods
+            self.exploration_policy = args.EXPLORATION_POLICY_FN()
+            self.memory = args.MEMORY_FN()
+            
+    
+            self.stats_dict = defaultdict(list)
         
-        # Create the Local Network and Target Network for the Actor
-        self.actor_local = args.ACTOR_NETWORK_FN()
-        self.actor_target = args.ACTOR_NETWORK_FN()
-        self.actor_local_optimizer = args.ACTOR_OPTIMIZER_FN(self.actor_local.parameters())
+        else:
+            print('[Agent] Loading Actor/Critic weights')
+            self.ACTOR_CHECKPOINT_PATH = args.ACTOR_CHECKPOINT_PATH
+            self.CRITIC_CHECHPOINT_PATH = args.CRITIC_CHECKPOINT_PATH
+            self.actor_local = args.ACTOR_NETWORK_FN()
+            self.critic_local = args.CRITIC_NETWORK_FN()
 
-        # Create the Local Network and Target Network for the Critic
-        self.critic_local = args.CRITIC_NETWORK_FN()
-        self.critic_target = args.CRITIC_NETWORK_FN()
-        self.critic_local_optimizer = args.CRITIC_OPTIMIZER_FN(self.critic_local.parameters())
-        
-        #### Methods
-        self.exploration_policy = args.EXPLORATION_POLICY_FN()
-        self.memory = args.MEMORY_FN()
-        
-
-        self.stats_dict = defaultdict(list)
+            self.exploration_policy = args.EXPLORATION_POLICY_FN()
+            self.actor_local.load_state_dict(torch.load(self.ACTOR_CHECKPOINT_PATH))
+            self.critic_local.load_state_dict(torch.load(self.CRITIC_CHECHPOINT_PATH))
+            print('[Agent] Actor weights loaded from: ', self.ACTOR_CHECKPOINT_PATH)
+            print('[Agent] Critic weights loaded from: ', self.CRITIC_CHECHPOINT_PATH)
 
     def act(self, state):
         """
@@ -121,8 +136,8 @@ class RLAgent:
     
     
 class DDPGAgent(RLAgent):
-    def __init__(self, args, env_type):
-        super().__init__(args, env_type)
+    def __init__(self, args, env_type, mode):
+        super().__init__(args, env_type, mode)
 
         
     def act(self, state, add_noise=True, action_value_range=(-1, 1)):
@@ -147,10 +162,12 @@ class DDPGAgent(RLAgent):
 
         # print(actions)
         # Add Random noise to the action space distribution to foster exploration
-        actions += self.exploration_policy.sample()
+        if self.mode == 'train:':
+            actions += self.exploration_policy.sample()
         
         # Clip the actions to the the min and max limit of action probs
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
+        # print('Actions Value: ', actions)
         return actions
 
 

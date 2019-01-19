@@ -17,6 +17,24 @@ Implementations
     
     2) *Hard-update:* In hard update the agent updates the weights of the target-network after every t-timstep. 
         * θ_target = θ_local
+        
+    In normal scenario we use the local network weights (w) to find the expected 
+    Q-value. 
+    
+        expected Q(s, a)_{local_network} = [wX + b]_{local_network}
+        
+    According to Bellman equation the target Q-values are computed by
+    current reward and a discounted return.
+    
+        target Q(s, a) = reward(s, a) + \gamma * max_{a}Q(s^{'}, a)_{local_network}
+        
+     Using Q(s, a)_{local_network} to find target value is not optimal because 
+     we would be using same parameters w_{local_network} to for target Q(s, a) and expected Q(s, a) and would have high correlaton between the TD target and the weights w_{local} we are learning.
+     
+     So instead, we use the target network parameters w_{target_network} to 
+     compute the target Q(s, a) :  
+     
+        target Q(s, a) = reward(s, a) + \gamma * max_{a}Q(s^{'}, a)_{target_network}
     
 2. **Double-Q-Network:** The double Q-network has a very subtle change over the DQN learning mechanism. In vanilla DQN we use one network (local_network) to select and evaluate an action. This can potentially lead to overoptimistic value estimates. Inorder to mitigate this Double-Q-network eas introduced, that uses one network (local network) to choose the action and uses another network (target network) to evaluate actions. 
  

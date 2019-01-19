@@ -5,9 +5,26 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+# def reset_parameters(self):
+#     init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+#     if self.bias is not None:
+#         fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
+#         bound = 1 / math.sqrt(fan_in)
+#         init.uniform_(self.bias, -bound, bound)
+        
+
 def hidden_init(layer):
     fan_in = layer.weight.data.size()[0]
+    # print('Fan In values: ', fan_in)
     lim = 1. / np.sqrt(fan_in)
+    return (-lim, lim)
+
+def glorot(layer):
+    fan_in = layer.weight.data.size()[0]
+    fan_out = layer.weight.data.size()[1]
+    # print('Fan In values: ', fan_in)
+    lim = 2. / np.sqrt(fan_in+fan_out)
     return (-lim, lim)
 
 class Actor(nn.Module):
@@ -24,13 +41,15 @@ class Actor(nn.Module):
             fc2_units (int): Number of nodes in second hidden layer
         """
         super(Actor, self).__init__()
+        print('[Actor] Initializing the Actor network ..... ')
         self.seed = torch.manual_seed(seed)
         self.bn1 = nn.BatchNorm1d(state_size)
         self.fc1 = nn.Linear(state_size, fc1_units)
-        # self.bn2 = nn.BatchNorm1d(fc1_units)
+        self.bn2 = nn.BatchNorm1d(fc1_units)
         # self.drop1 = nn.Dropout(p=0.7)
         self.fc2 = nn.Linear(fc1_units, fc2_units)
-        # self.bn3 = nn.BatchNorm1d(fc2_units)
+
+        self.bn2 = nn.BatchNorm1d(fc2_units)
         # self.drop2 = nn.Dropout(p=0.5)
         # self.bn2 = nn.BatchNorm1d(fc2_units)
         self.fc3 = nn.Linear(fc2_units, action_size)
@@ -45,7 +64,7 @@ class Actor(nn.Module):
         """Build an actor (policy) network that maps states -> actions."""
         x = F.relu(self.fc1(self.bn1(state)))
         # x = self.drop1(x)
-        x = F.relu(self.fc2(x))
+        x = F.relu(self.bn2(self.fc2(x)))
         # x = self.drop2(x)
         return F.tanh(self.fc3(x))
 
@@ -53,7 +72,7 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     """Critic (Value) Model."""
 
-    def __init__(self, state_size, action_size, seed, fc1_units=512, fc2_units=256):
+    def __init__(self, state_size, action_size, seed, fc1_units=512, fc2_units=256, mode='train'):
         """Initialize parameters and build model.
         Params
         ======
@@ -64,6 +83,8 @@ class Critic(nn.Module):
             fc2_units (int): Number of nodes in the second hidden layer
         """
         super(Critic, self).__init__()
+        print('[Actor] Initializing the Critic network ..... ')
+        
         self.seed = torch.manual_seed(seed)
         self.bn1 = nn.BatchNorm1d(state_size)
         self.fc1 = nn.Linear(state_size, fc1_units)
@@ -86,3 +107,93 @@ class Critic(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.drop2(x)
         return self.fc3(x)
+
+#
+# class Actor(nn.Module):
+#     """Actor (Policy) Model."""
+#
+#     def __init__(self, state_size, action_size , hidden_units, seed, gate=F.relu, final_gate=F.tanh):
+#         """Initialize parameters and build model.
+#         Params
+#         ======
+#             state_size (int): Dimension of each state
+#             action_size (int): Dimension of each action
+#             hidden_units (array): Number of nodes for layers
+#             seed (int): Random seed
+#             gate (function): activation function
+#             final_gate (function): final activation function
+#         """
+#         super(Actor, self).__init__()
+#         self.seed = torch.manual_seed(seed)
+#         self.gate = gate
+#         self.final_gate = final_gate
+#         self.normalizer = nn.BatchNorm1d(state_size)
+#         dims = (state_size,) + hidden_units
+#         self.layers = nn.ModuleList([nn.Linear(dim_in, dim_out) for dim_in, dim_out in zip(dims[:-1], dims[1:])])
+#         self.output = nn.Linear(dims[-1], action_size)
+#         self.reset_parameters()
+#
+#     def reset_parameters(self):
+#         for layer in self.layers:
+#             layer.weight.data.uniform_(*hidden_init(layer))
+#         self.output.weight.data.uniform_(-3e-3, 3e-3)
+#
+#     def forward(self, states):
+#         """Build an actor (policy) network that maps states -> actions."""
+#         x = self.normalizer(states)
+#         for layer in self.layers:
+#             x = self.gate(layer(x))
+#         return self.final_gate(self.output(x))
+#
+# class Critic(nn.Module):
+#     """Critic (Value) Model."""
+#
+#     def __init__(self, state_size, action_size, hidden_units, seed, gate=F.relu, dropout=0.2):
+#         """Initialize parameters and build model.
+#         Params
+#         ======
+#             state_size (int): Dimension of each state
+#             action_size (int): Dimension of each action
+#             hidden_units (array): Number of nodes for layers
+#             seed (int): Random seed
+#             gate (function): activation function
+#         """
+#         super(Critic, self).__init__()
+#         self.seed = torch.manual_seed(seed)
+#         self.gate = gate
+#         self.dropout = nn.Dropout(p=dropout)
+#         self.normalizer = nn.BatchNorm1d(state_size)
+#         dims = (state_size,) + hidden_units
+#         self.layers = nn.ModuleList()
+#         count = 0
+#         for dim_in, dim_out in zip(dims[:-1], dims[1:]):
+#             if count == 1:
+#                 self.layers.append(nn.Linear(dim_in + action_size, dim_out))
+#             else:
+#                 self.layers.append(nn.Linear(dim_in, dim_out))
+#             count += 1
+#         self.output = nn.Linear(dims[-1], 1)
+#         self.reset_parameters()
+#
+#     def reset_parameters(self):
+#         for layer in self.layers:
+#             layer.weight.data.uniform_(*hidden_init(layer))
+#         self.output.weight.data.uniform_(-3e-3, 3e-3)
+#
+#     def forward(self, states, actions):
+#         """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
+#         xs = self.normalizer(states)
+#         xs = self.gate(self.layers[0](xs))
+#         x = torch.cat((xs, actions), dim=1)
+#         for i in range(1, len(self.layers)):
+#             x = self.gate(self.layers[i](x))
+#         x = self.dropout(x)
+#         return self.output(x)
+
+
+# ac = Actor(state_size=5, action_size=4, seed=2, fc1_units=2, fc2_units=4)
+# state = np.random.random((1, 5))
+# act = np.random.random((1, 4))
+# states = torch.from_numpy(state).float().to('cpu')
+# actions = torch.from_numpy(act).float().to('cpu')
+# b_ = ac.forward(states)
