@@ -131,4 +131,4 @@ Ideas for future improvement:
 -----
 * Experiment with different Network architectures.
 * Use priority replay buffer.
-* Try a large deep network with Actor-Critic heads where Actor and Critics are benifited by parameter sharing.
+* Try a large deep network with Actor-Critic heads where Actor and Critics are benefited by parameter sharing.

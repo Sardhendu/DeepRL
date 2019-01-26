@@ -73,10 +73,14 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
             
  
  ### TODO:
- 1. Dueling Network Architectures with DQN
- 2. n-step Bootstrap.
+ 1. Modular code for each environment.
+ 2. Dueling Network Architectures with DQN
  3. Lambda return (n-step bootstrap)
  4. Actor-Critic
  5. Crawler for Continuous Control
+ 6. Add Tensorflow graphs instead of manual dictionary graphs.
+ 7. Continuous control Test phase.
+
+ 
 
  

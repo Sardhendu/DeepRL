@@ -60,3 +60,7 @@ This project is aimed to make a reinforcement learning DQN agent, a double-joint
 * Deep Reinforcement Learning with Double Q-Learning: [Paper](https://arxiv.org/pdf/1509.06461.pdf) 
 * Continuous Control with deep renforcement learning: [Paper](https://arxiv.org/abs/1509.02971)
 
+
+### TODO's
+* Use the implemented priority replay buffer.
+* Try a large deep network with Actor-Critic heads where Actor and Critics are benefited by parameter sharing.

@@ -9,6 +9,7 @@ import torch
 import torch.nn.functional as F
 
 import src.commons as cmn
+import src.utils as utils
 
 # TODO: Reset the noise to after every episode
 # TODO: Add Batchnormalization
@@ -81,6 +82,9 @@ class RLAgent:
             self.critic_local.load_state_dict(torch.load(self.CRITIC_CHECHPOINT_PATH))
             print('[Agent] Actor weights loaded from: ', self.ACTOR_CHECKPOINT_PATH)
             print('[Agent] Critic weights loaded from: ', self.CRITIC_CHECHPOINT_PATH)
+            
+        self.soft_update = utils.soft_update
+        self.hard_update = utils.soft_update
 
     def act(self, state):
         """
@@ -98,40 +102,6 @@ class RLAgent:
         # print('4223423 ', state)
         pass
 
-    def soft_update(self, local_model, target_model, tau):
-        """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
-
-        Params
-        ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
-            tau (float): interpolation parameter
-
-        Idea
-        ======
-            Instead of performing a hard update on Fixed-Q-targets after say 10000 timesteps, perform soft-update
-            (move slightly) every time-step
-        """
-        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
-
-    def hard_update(self, local_model, target_model):
-        """Hard update model parameters.
-        θ_target = θ_local
-
-        Params
-        ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
-
-        Idea
-        ======
-            After t time-step copy the weights of local network to target network
-        """
-        # print('[Hard Update] Performuing hard update .... ')
-        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(local_param.data)
 
     
     
