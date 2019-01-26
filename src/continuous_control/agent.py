@@ -132,7 +132,7 @@ class DDPGAgent(RLAgent):
 
         # print(actions)
         # Add Random noise to the action space distribution to foster exploration
-        if self.mode == 'train:':
+        if self.mode == 'train':
             actions += self.exploration_policy.sample()
         
         # Clip the actions to the the min and max limit of action probs

@@ -65,26 +65,20 @@ class Agent(AgentParams):
             with torch.no_grad():
                 action = self.actor_local[num].forward(state)
             self.actor_local[num].train()
-
-
             
-            if self.MODE == 'train:':
+            if self.MODE == 'train':
                 action += self.exploration_policy[num].sample()
-
-            print('actionaction: ', action)
-            print('noise nise: ', self.exploration_policy[num].sample())
-    
             # Clip the actions to the the min and max limit of action probs
-            actions = np.clip(actions, action_value_range[0], action_value_range[1])
+            action = np.clip(action, action_value_range[0], action_value_range[1])
             # print('Actions Value: ', actions)
 
-            actions.append(actions)
+            actions.append(action)
         return np.concatenate(actions)
 
 
     def learn(self, experiences, gamma, agent_num):
         state, action, reward, next_state, done = experiences
-        # print(state.shape, action.shape)
+
         #------------------------- CRITIC ---------------------------#
         # 1. First we fetch the expented value using critic local and the state-action pair
         expected_returns = self.critic_local[agent_num].forward(state, action)
@@ -145,7 +139,7 @@ class Agent(AgentParams):
 
             elif self.SOFT_UPDATE:
                 if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
-                    print('Performing soft-update at: ', running_time_step)
+                    # print('Performing soft-update at: ', running_time_step)
 
                     if self.DECAY_TAU:
                         tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
