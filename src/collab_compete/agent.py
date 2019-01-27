@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 
 from src import utils
-from src import commons as cmn
+from src import common as cmn
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -46,6 +46,7 @@ class AgentParams():
             self.soft_update = utils.soft_update
             self.hard_update = utils.hard_update
 
+            self.noise_amplitude_decay = args.NOISE_AMPLITUDE_FN()
             self.exploration_policy = [args.EXPLORATION_POLICY_FN() for _ in range(0, self.NUM_AGENTS)]
             
             self.SUMMARY_LOGGER = args.SUMMARY_LOGGER
@@ -58,8 +59,10 @@ class Agent(AgentParams):
         super().__init__(args, mode)
         
         
-    def act(self, states, action_value_range=(-1,1)):
+    def act(self, states, action_value_range, running_time_step, log=True):
         actions = []
+
+        self.noise_amplitude = self.noise_amplitude_decay()
         for num, state in enumerate(states):
             state = torch.from_numpy(np.expand_dims(state, axis=0)).float().to(device)
             state.require_grad = False
@@ -69,12 +72,15 @@ class Agent(AgentParams):
             self.actor_local[num].train()
             
             if self.MODE == 'train':
-                action += self.exploration_policy[num].sample()
+                action += self.exploration_policy[num].sample() * self.noise_amplitude
+                
             # Clip the actions to the the min and max limit of action probs
             action = np.clip(action, action_value_range[0], action_value_range[1])
             # print('Actions Value: ', actions)
 
             actions.append(action)
+
+    
         return np.concatenate(actions)
 
 
@@ -117,6 +123,12 @@ class Agent(AgentParams):
             value_dict = {
                 'critic loss': critic_loss,
                 'actor_loss': actor_loss
+            }
+            self.log(tag, value_dict, running_time_step)
+
+            tag = 'decay/noise_amplitude'
+            value_dict = {
+                'noise_amplitude': self.noise_amplitude
             }
             self.log(tag, value_dict, running_time_step)
             
@@ -178,7 +190,11 @@ class Agent(AgentParams):
                         self.soft_update(self.actor_local[num], self.actor_target[num], tau)
             else:
                 raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
+
+    def reset(self):
+        _ = [self.exploration_policy[nag].reset() for nag in range(0, self.NUM_AGENTS)]
     
+       
     
     def log(self, tag, value_dict, step):
         self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)

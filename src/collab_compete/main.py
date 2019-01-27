@@ -242,7 +242,9 @@ def main():
         
         # Number of time steps is actually very less before the episode is done(One of the agent losses)
         for t in range(0, args.NUM_TIMESTEPS):
-            actions = agent.act(states) # select an action (for each agent)
+            actions = agent.act(
+                    states,  action_value_range=(-1, 1), running_time_step=running_time_step, log=True
+            ) # select an action (for each agent)
             # print('Actions: ', actions)
         
             next_states, rewards, dones, _ = env.step(actions)
@@ -257,7 +259,8 @@ def main():
             if np.any(dones):                                  # exit loop if episode finished
                 print('Number of steps before done: ', t)
                 break
-
+        
+        agent.reset()
         _ = [
         scores[ag_num].push(
                 scores=scores_per_episode[ag_num], episode_num=episode_num, logger=args.SUMMARY_LOGGER)

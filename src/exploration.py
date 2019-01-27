@@ -3,8 +3,17 @@ import numpy as np
 import copy
 import torch
 
+
+
+
 class OUNoise:
-    """Ornstein-Uhlenbeck process."""
+    """Ornstein-Uhlenbeck process.
+    
+    OUNoise is helpful for continuous actions space where we cannot take random actions since the action
+    space in continuous interim can be infinite
+    
+    # from https://github.com/songrotek/DDPG/blob/master/ou_noise.py
+    """
 
     def __init__(self, size, seed, scale=0.1, mu=0., theta=0.15, sigma=0.2):
         """Initialize parameters and noise process."""
@@ -35,6 +44,8 @@ class EpsilonGreedy:
     pass
 
 
+    
+# debug()
 
 # 32208 + 149411 + 7877 + 511807 + 391050 + 27224 + 181
 #

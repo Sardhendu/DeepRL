@@ -11,3 +11,4 @@ that the score decreases after that, which means the agent learning is unstable.
 
 ### TODO's
 1. Build my own Unity Environment: [LINK](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Getting-Started-with-Balance-Ball.md)
+2. Implement Centralized learning for multi-agent (MADDPG)

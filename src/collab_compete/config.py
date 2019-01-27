@@ -64,6 +64,8 @@ class Config:
         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
     
     ################### Lambda Functions:
+    NOISE_AMPLITUDE_FN = lambda: utils.Decay(
+            alpha=2, decay_rate=0.999, min_value=0.001, start_decay_after_step=Config.DATA_TO_BUFFER_BEFORE_LEARNING).multiplicative_decay
     EXPLORATION_POLICY_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
     
     # Agent-1 and Agent-2
