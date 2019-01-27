@@ -144,6 +144,7 @@ from unityagents import UnityEnvironment
 
 
 from src.collab_compete.agent import Agent
+from src.collab_compete.config import Config
 
 
 # env = UnityEnvironment('./Tennis.app')
@@ -218,35 +219,37 @@ class CollabCompete:
 
 
 
-from src.collab_compete.config import Config
 
 
 
 def main():
-
+    args = Config
     env = CollabCompete()
 
     num_agents = 2
     action_size = 2
     
-    agent = Agent(args=Config, mode='train')
+    agent = Agent(args=args, mode='train')
+    scores = [args.SCORES_FN(num) for num in range(0, args.NUM_AGENTS)]
     running_time_step = 1
+    
     for episode_num in range(1, 1000):                                      # play game for 5 episodes
         
         print('Running Episode: ', episode_num)
         states = env.reset()
-        scores = np.zeros(num_agents)
+        scores_per_episode = np.zeros(num_agents)
         # print('States shape: ', states.shape)
         
         # Number of time steps is actually very less before the episode is done(One of the agent losses)
-        for t in range(0, Config.NUM_TIMESTEPS):
+        for t in range(0, args.NUM_TIMESTEPS):
             actions = agent.act(states) # select an action (for each agent)
             # print('Actions: ', actions)
         
             next_states, rewards, dones, _ = env.step(actions)
             agent.step(states, actions, rewards, next_states, dones, episode_num, running_time_step)
             # print('Next states shape: ', next_states.shape)
-            scores += rewards                         # update the score (for each agent)
+            # print('RewardsRewards: ', rewards)
+            scores_per_episode += rewards                         # update the score (for each agent)
             states = next_states                               # roll over states to next time step
 
             running_time_step += 1
@@ -255,8 +258,20 @@ def main():
                 print('Number of steps before done: ', t)
                 break
 
+        _ = [
+        scores[ag_num].push(
+                scores=scores_per_episode[ag_num], episode_num=episode_num, logger=args.SUMMARY_LOGGER)
+            for ag_num in range(0,args.NUM_AGENTS)
+        ]
+        
+        # print ('scoresscoresscores: ', scores)
+        #
+        # args.SUMMARY_LOGGER.add_scalars('agent%i/losses' % agent_num,
+        #                                 {'critic loss': critic_loss,
+        #                                  'actor_loss': actor_loss},
+        #                                 running_time_step)
             
-        print('Score (max over agents) from episode {}: {}'.format(episode_num, np.max(scores)))
+        # print('Score (max over agents) from episode {}: {}'.format(episode_num, np.max(scores)))
 
 
 

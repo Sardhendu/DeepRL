@@ -64,8 +64,8 @@ class DDPG:
         scores_window = deque(maxlen=100)
         NUM_AGENTS = 20
         running_time_step = 1
+        
         for i_episode in range(1, n_episodes + 1):
-            
             agent.reset()
             states = env.reset()
             scores = np.zeros(NUM_AGENTS)  # NUM_AGENTS

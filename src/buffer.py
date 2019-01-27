@@ -42,6 +42,8 @@ class MemoryER:
             actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)
         elif self.action_dtype == 'float':
             actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
+        else:
+            raise ValueError('Only float and double type accepted for actions')
             
         rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
         next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)

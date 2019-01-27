@@ -20,6 +20,7 @@ matplotlib
 #gym
 cffi
 cython
+protobuf
 
 # Unity Environment
 unityagents

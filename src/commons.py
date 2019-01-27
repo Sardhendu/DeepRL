@@ -5,15 +5,6 @@ import matplotlib.pyplot as plt
 matplotlib.style.use('ggplot')
 
 
-
-
-
-
-def exp_decay(alpha, decay_rate, iteration_num, min_value=0):
-   alpha_d = alpha * np.exp(-decay_rate*iteration_num)
-   return max(min_value, alpha_d)
-
-
 import json
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):

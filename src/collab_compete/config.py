@@ -2,10 +2,12 @@
 
 
 import torch
-
+from src import utils
 from src.buffer import MemoryER
 from src.exploration import OUNoise
 from src.collab_compete.model import Actor, Critic
+from src.logger import Logger
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -23,7 +25,8 @@ class Config:
     # # MODEL PARAMETERS
     # SEED = 0
     BUFFER_SIZE = int(1e05)
-    BATCH_SIZE = 256
+    BATCH_SIZE = 512
+    DATA_TO_BUFFER_BEFORE_LEARNING = BATCH_SIZE * 5
 
     # Exploration parameter
     NOISE = True
@@ -52,7 +55,7 @@ class Config:
     HARD_UPDATE = False
     HARD_UPDATE_FREQUENCY = 1000
     
-    DATA_TO_BUFFER_BEFORE_LEARNING = BATCH_SIZE*5
+    
     
     if (SOFT_UPDATE and HARD_UPDATE) or (not SOFT_UPDATE and not HARD_UPDATE):
         raise ValueError('Only one of Hard Update and Soft Update is to be chosen ..')
@@ -87,16 +90,29 @@ class Config:
     ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
     CRITIC_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=Config.ACTOR_LEARNING_RATE)
     
-    # Agent Memory-Buffer
+    # Agent Memory-Buffer and Scores
     MEMORY_FN = lambda: MemoryER(Config.BUFFER_SIZE, Config.BATCH_SIZE, seed=2, action_dtype='float')
+    SCORES_FN = lambda param: utils.Scores(episode_score_window=100, agent_id=param)
     
-    # USE PATH
+    # LOG PATHS
     MODEL_NAME = 'model_1'
-    # model_dir =  pth + '/models'
-    # base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
-    # if not os.path.exists(base_dir):
-    #     print('creating .... ', base_dir)
-    #     os.makedirs(base_dir)
-    # #
-    # STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
-    # CHECKPOINT_DIR = base_dir
+    pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+    model_dir = pth + '/models'
+    base_dir = os.path.join(model_dir, 'collab_compete', '%s' % (MODEL_NAME))
+    
+    if not os.path.exists(base_dir):
+        print('creating .... ', base_dir)
+        os.makedirs(base_dir)
+
+    CHECKPOINT_DIR = base_dir
+    STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
+    SUMMARY_LOGGER_PATH = os.path.join(base_dir, 'summary')
+    
+    if not os.path.exists(SUMMARY_LOGGER_PATH):
+        print('creating .... ', SUMMARY_LOGGER_PATH)
+        os.makedirs(SUMMARY_LOGGER_PATH)
+
+    SUMMARY_LOGGER = Logger(SUMMARY_LOGGER_PATH)
+    
+    
+# Config()

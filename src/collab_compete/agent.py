@@ -32,7 +32,7 @@ class AgentParams():
         if mode == 'train':
             self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
             self.BATCH_SIZE = args.BATCH_SIZE
-            self.memory = [args.MEMORY_FN() for _ in range(0, self.NUM_AGENTS)]
+            self.memory = args.MEMORY_FN()#[args.MEMORY_FN() for _ in range(0, self.NUM_AGENTS)]
             
             self.actor_local = [ag() for ag in args.ACTOR_NETWORK_FN]
             self.actor_target = [ag() for ag in args.ACTOR_NETWORK_FN]
@@ -47,6 +47,8 @@ class AgentParams():
             self.hard_update = utils.hard_update
 
             self.exploration_policy = [args.EXPLORATION_POLICY_FN() for _ in range(0, self.NUM_AGENTS)]
+            
+            self.SUMMARY_LOGGER = args.SUMMARY_LOGGER
         else:
             pass
 
@@ -76,7 +78,7 @@ class Agent(AgentParams):
         return np.concatenate(actions)
 
 
-    def learn(self, experiences, gamma, agent_num):
+    def learn(self, experiences, gamma, agent_num, running_time_step, log=True):
         state, action, reward, next_state, done = experiences
 
         #------------------------- CRITIC ---------------------------#
@@ -108,26 +110,50 @@ class Agent(AgentParams):
         actor_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor_local[agent_num].parameters(), 1)
         self.actor_local_optimizer[agent_num].step()
+
+        #------------------------- LOGGING --------------------------#
+        if log:
+            tag = 'agent%i/losses' % agent_num
+            value_dict = {
+                'critic loss': critic_loss,
+                'actor_loss': actor_loss
+            }
+            self.log(tag, value_dict, running_time_step)
+            
         
         
-        
-    def step(self, states, actions, rewards, next_states, dones, episode_num, running_time_step):
+    def step(self, states, actions, rewards, next_states, dones, episode_num, running_time_step, log=True):
     
         learning_flag = 0
-        
-        for num in range(self.NUM_AGENTS):
-            # print('adding: ', state.shape, action.shape, reward, next_state.shape, done)
-            # self.memory.add(state, action, reward, next_state, done)
-            self.memory[num].add(states[num], actions[num], rewards[num], next_states[num], dones[num])
 
-            if (running_time_step % self.LEARNING_FREQUENCY) == 0:
-                if len(self.memory[num]) > self.DATA_TO_BUFFER_BEFORE_LEARNING:
-                    # print('Agent %s : Memory Size: ', len(self.memory[num]))
-                    
-                    experiences = self.memory[num].sample()
-                    # print('Experience, Experience: ', experiences[0].shape, experiences[1].shape, experiences[
-                    #     2].shape, experiences[3].shape)
-                    self.learn(experiences, self.GAMMA, num)
+        states = np.expand_dims(np.stack(states, axis=0), axis=0)
+        actions = np.expand_dims(np.stack(actions, axis=0), axis=0)
+        rewards = np.expand_dims(np.stack(rewards, axis=0), axis=0)
+        next_states = np.expand_dims(np.stack(next_states, axis=0), axis=0)
+        dones = np.expand_dims(np.stack(dones, axis=0), axis=0)
+        
+        self.memory.add(states, actions, rewards, next_states, dones)
+
+        # print('adding: ', state.shape, action.shape, reward, next_state.shape, done)
+        # self.memory.add(state, action, reward, next_state, done)
+        # self.memory[num].add(states[num], actions[num], rewards[num], next_states[num], dones[num])
+
+        if (running_time_step % self.LEARNING_FREQUENCY) == 0:
+            if len(self.memory) > self.DATA_TO_BUFFER_BEFORE_LEARNING:
+                # print('Agent %s : Memory Size: ', len(self.memory[num]))
+
+                experiences = self.memory.sample()
+                state, action, reward, next_state, done = experiences
+                state = state.permute(1, 0, 2)              # convert to [batch_size, num_agents, num_states]
+                action = action.permute(1, 0, 2)            # convert to [batch_size, num_agents, num_states]
+                reward = reward.permute(1, 0)               # convert to [batch_size, num_agents]
+                next_state = next_state.permute(1, 0, 2)    # convert to [batch_size, num_agents, num_states]
+                done = done.permute(1, 0)                   # convert to [batch_size, num_agents]
+                
+                for num in range(0, self.NUM_AGENTS):
+                    experiences = [state[num], action[num], reward[num], next_state[num], done[num]]
+                    self.learn(experiences, self.GAMMA, num, running_time_step)
+
                     learning_flag = 1
 
         if learning_flag == 1:
@@ -139,10 +165,11 @@ class Agent(AgentParams):
 
             elif self.SOFT_UPDATE:
                 if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
-                    # print('Performing soft-update at: ', running_time_step)
+                    print('Performing soft-update at: ', running_time_step)
 
                     if self.DECAY_TAU:
-                        tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
+                        tau = utils.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
+
                     else:
                         tau = self.TAU
 
@@ -152,3 +179,6 @@ class Agent(AgentParams):
             else:
                 raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
     
+    
+    def log(self, tag, value_dict, step):
+        self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)
