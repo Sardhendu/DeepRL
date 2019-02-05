@@ -3,7 +3,9 @@
 #### Background Theory:
 -------------
 **On-Policy and Off-Policy**:
+An On-policy learning estimates the action-value using the policy that is continued to be followed in the future. In Off-policy learning the action-value is estimated using the policy that maximizes the return and the policy followed can change (depends on Epsilon greedy policy). For example. In SARSA, we first estimate the policy (action to take) which is an epsilon-greedy policy and then we use action-value of the selected policy. However, in SARSA Max (Q-learning), we first select the action-value on policy that maximizes the return and follow a epsilon greedy policy. 
 
+It estimates the return for state-action pairs assuming the current policy continues to be followed 
 
 **Policy Gradient and Monte-Carlo**:
 Monte-Carlo methods have high variance because they take the expectation of the state-action value across many episodes and these values can vary too much. These methods have low bias because there are lots of random event that takes place within each episode. Policy gradient relates to Monte-carlo approximation where random events are drawn forming a trajectory following a policy.
@@ -41,11 +43,8 @@ In DQN, the network outputs an action-value function Q(s, a) for a discrete acti
 
 
 #### Results:
-
     
-   With several model configuration, we found that DQN with Soft-update reaches the target score faster when 
-   compared to other mehtods. The banana collection state space is not sufficient (complex enough) to imply if one 
-   method is better than another.
+   With several model configuration, we found that DQN with Soft-update reaches the target score faster when compared to other methods. The Continuous-collection state space is not sufficient (complex enough) to imply if one method is better than another.
    
    * **DQN Soft-update with best Hyper-parameter-configuration:**
         ```python
