@@ -22,7 +22,7 @@ This project is aimed to make a reinforcement learning DQN agent, a double-joint
    * Neural Network Architecture: Multilayer Neural network
    (Visual Environment)
    * Fixed-Q-targets: With soft update and Hard Update.
-   * Policy Exploration: Epsilon greedy and Ornstein-Uhlenbeck Noise.   
+   * Policy Exploration: Ornstein-Uhlenbeck Noise.   
 
 #### Getting Started: [Jump to the Report](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/REPORT.md)
 1) **Single Agent Environment:** Download the environment from one of the links below. Select the environment that matches your 

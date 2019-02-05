@@ -145,13 +145,8 @@ class DDPG:
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=1e-3, weight_decay=0.0)
 
         self.soft_update = utils.soft_update
-        self.hard_copy_weights(self.actor_target, self.actor_local)
-        self.hard_copy_weights(self.critic_target, self.critic_local)
-    
-    def hard_copy_weights(self, target, source):
-        """ copy weights from source to target network (part of initialization)"""
-        for target_param, param in zip(target.parameters(), source.parameters()):
-            target_param.data.copy_(param.data)
+        utils.hard_update(local_model=self.actor_local, target_model=self.actor_target)
+        utils.hard_update(local_model=self.critic_local, target_model=self.critic_target)
     
     def act(self, state, action_value_range, running_time_step, summary_logger):
         # print(state)

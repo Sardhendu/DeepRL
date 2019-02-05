@@ -178,6 +178,7 @@ from src.collab_compete.agent1 import MDDPG
 from collections import deque
 from unityagents import UnityEnvironment
 from src.collab_compete.config import Config
+from src.utils import Scores
 env = UnityEnvironment(file_name="Tennis.app", no_graphics=True)
 
 # get the default brain
@@ -185,12 +186,14 @@ brain_name = env.brain_names[0]
 brain = env.brains[brain_name]
 
 # agent = MADDPG(seed=2, noise_start=0.5, update_every=2, gamma=1, t_stop_noise=30000)
-agent = MDDPG(args=Config, mode='train')
+CentralizedAgent = MDDPG(args=Config, mode='train')
 n_episodes = 10000
 max_t = 1000
 scores = []
 scores_deque = deque(maxlen=100)
 scores_avg = []
+
+individual_scores = [Scores(100, num) for num in range(0, 2)]
 
 iteration_num = 0
 for i_episode in range(1, n_episodes + 1):
@@ -202,7 +205,7 @@ for i_episode in range(1, n_episodes + 1):
     for t in range(max_t):
         # print('Time step: ', t)
         # select an action
-        action = agent.act(state, action_value_range=(-1,1), running_time_step=iteration_num)
+        action = CentralizedAgent.act(state, action_value_range=(-1,1), running_time_step=iteration_num)
         # take action in environment and set parameters to new values
         
         # print('242432 ', action)
@@ -214,37 +217,54 @@ for i_episode in range(1, n_episodes + 1):
         rewards_vec = env_info.rewards
         done = env_info.local_done
         # update and train agent with returned information
-        agent.step(state, action, rewards_vec, next_state, done, i_episode, iteration_num, log = True)
+        CentralizedAgent.step(state, action, rewards_vec, next_state, done, iteration_num)
         # agent.step(state, action, rewards_vec, next_state, done, iteration_num)
         state = next_state
         rewards.append(rewards_vec)
         iteration_num += 1
+        
+        
+        # print(rewards_vec)
         if any(done):
             break
 
-    # calculate episode reward as maximum of individually collected rewards of agents
-    episode_reward = np.max(np.sum(np.array(rewards), axis=0))
-
-    scores.append(episode_reward)  # save most recent score to overall score array
-    scores_deque.append(episode_reward)  # save most recent score to running window of 100 last scores
+    # # calculate episode reward as maximum of individually collected rewards of agents
+    agent_scores_per_episode = np.sum(np.array(rewards), axis=0)
+    max_scores_per_episode = np.max(agent_scores_per_episode)
+    # print(max_scores_per_episode)
+    #
+    scores.append(max_scores_per_episode)  # save most recent score to overall score array
+    scores_deque.append(max_scores_per_episode)  # save most recent score to running window of 100 last scores
     current_avg_score = np.mean(scores_deque)
     scores_avg.append(current_avg_score)  # save average of last 100 scores to average score array
 
+    ########################
+    for ag_num in range(2):
+        tag = 'agent%i/scores_per_episode' % ag_num
+        value_dict = {
+            'actor_loss': float(agent_scores_per_episode[ag_num])
+        }
+        Config.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
+
+    tag = 'common/avg_score'
+    value_dict = {'avg_score_100_episode': current_avg_score}
+    step = i_episode
+
+    CentralizedAgent.log(tag, value_dict, step)
+    ########################
+
+    #
     print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score), end="")
 
     # log average score every 200 episodes
     if i_episode % 200 == 0:
         print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score))
-        agent.checkpoint(episode_num=i_episode)
+        CentralizedAgent.checkpoint(episode_num=i_episode)
 
     # break and report success if environment is solved
     if np.mean(scores_deque) >= .5:
         print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.3f}'.format(i_episode, np.mean(scores_deque)))
-        agent.checkpoint(episode_num=i_episode)
+        CentralizedAgent.checkpoint(episode_num=i_episode)
         break
-        
-    tag = 'common/avg_score'
-    value_dict =  {'avg_score_100_episode': current_avg_score}
-    step = i_episode
 
-    agent.log(tag, value_dict, step)
+    
