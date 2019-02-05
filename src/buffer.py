@@ -20,15 +20,22 @@ class MemoryER:
             seed (int): random seed
         """
         print('[INIT] Initializing Experience Replay Buffer .... .... ....')
+
+        random.seed(seed)
         self.memory = deque(maxlen=buffer_size)  # FIFO
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
-        self.seed = random.seed(seed)
         self.action_dtype = action_dtype
     
     def add(self, state, action, reward, next_state, done):
         """Add a new experience to memory."""
         # print('1212121212 ', state.shape, action, reward, next_state.shape, done)
+        # print(state)
+        # print(action)
+        # print(reward)
+        # print(next_state)
+        # print(done)
+        # print('')
         e = self.experience(state, action, reward, next_state, done)
         self.memory.append(e)
     

@@ -6,38 +6,66 @@ import torch
 
 
 
-class OUNoise:
-    """Ornstein-Uhlenbeck process.
-    
-    OUNoise is helpful for continuous actions space where we cannot take random actions since the action
-    space in continuous interim can be infinite
-    
-    # from https://github.com/songrotek/DDPG/blob/master/ou_noise.py
-    """
+# class OUNoise:
+#     """Ornstein-Uhlenbeck process.
+#
+#     OUNoise is helpful for continuous actions space where we cannot take random actions since the action
+#     space in continuous interim can be infinite
+#
+#     # from https://github.com/songrotek/DDPG/blob/master/ou_noise.py
+#     """
+#
+#     def __init__(self, size, seed, scale=0.1, mu=0., theta=0.15, sigma=0.2):
+#         """Initialize parameters and noise process."""
+#         print('[INIT] Initializing Ornstein-Uhlenbeck Noise for policy exploration ... ... ...')
+#         np.random.seed(seed)
+#         self.scale = scale
+#         self.size = size
+#         self.mu = mu * np.ones(size)
+#         self.theta = theta
+#         self.sigma = sigma
+#         self.state = np.ones(self.size) * self.mu
+#         self.reset()
+#
+#     def reset(self):
+#         """Reset the internal state (= noise) to mean (mu)."""
+#         self.state = np.ones(self.size) * self.mu
+#
+#     def sample(self):
+#         """Update internal state and return it as a noise sample."""
+#         x = self.state
+#         dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
+#         self.state = x + dx
+#         return self.state #torch.tensor(self.state * self.scale).float()
+#
 
-    def __init__(self, size, seed, scale=0.1, mu=0., theta=0.15, sigma=0.2):
+
+
+
+class OUNoise:
+    """Ornstein-Uhlenbeck process."""
+    
+    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.2):
         """Initialize parameters and noise process."""
-        print('[INIT] Initializing Ornstein-Uhlenbeck Noise for policy exploration ... ... ...')
         np.random.seed(seed)
-        self.scale = scale
+        np.random.seed(seed)
         self.size = size
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
-        self.state = np.ones(self.size) * self.mu
         self.reset()
-
+    
     def reset(self):
         """Reset the internal state (= noise) to mean (mu)."""
-        self.state = np.ones(self.size) * self.mu
-
+        # print ('237189237891738937972987jcjshdgchjdgchjdghcjgdcghjdgjhhgjhgj')
+        self.state = copy.copy(self.mu)
+    
     def sample(self):
         """Update internal state and return it as a noise sample."""
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
+        dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(self.size)
         self.state = x + dx
-        return torch.tensor(self.state * self.scale).float()
-
+        return self.state
 
 
 class EpsilonGreedy:

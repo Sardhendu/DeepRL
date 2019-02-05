@@ -38,7 +38,8 @@ def hard_update(local_model, target_model):
 
 
 class Decay:
-    def __init__(self, alpha, decay_rate, min_value=0, start_decay_after_step=0):
+    def __init__(
+            self, decay_type, alpha, decay_rate, min_value=0, start_decay_after_step=0, decay_to_zero_after_step=0):
         """
         :param alpha:           int/float Initial value
         :param decay_rate:      float       By how much to decay every step
@@ -48,9 +49,16 @@ class Decay:
         self.decay_rate = decay_rate
         self.min_value = min_value
         self.start_decay_after_step = start_decay_after_step
-        
+        self.decay_to_zero_after_step = decay_to_zero_after_step
         self.iteration_num = 0
-    
+        
+        if decay_type == 'exponential':
+            self.decay = self.exponential_decay
+        elif decay_type == 'multiplicative':
+            self.decay = self.multiplicative_decay
+        else:
+            raise ValueError('Only Exponential and multiplicative permitted')
+        
     def exponential_decay(self):
         """
         NOTE: It is best to use this decay after every int(total_episodes/30) episodes.
@@ -60,15 +68,19 @@ class Decay:
         :return:
         """
         self.alpha = self.alpha * np.exp(-self.decay_rate * self.iteration_num)
-        self.iteration_num += 1
-        return max(self.min_value, self.alpha)
     
     def multiplicative_decay(self):
+        self.alpha = self.alpha * self.decay_rate
+        
+    def sample(self):
         if self.iteration_num > self.start_decay_after_step:
-            self.alpha = self.alpha * self.decay_rate
+            self.decay()
+            
+        if self.decay_to_zero_after_step is not None and (self.iteration_num > self.decay_to_zero_after_step):
+            self.alpha = 0
+            
         self.iteration_num += 1
-        return max(0, self.alpha)
-
+        return max(self.min_value, self.alpha)
 
 class Scores:
     """
@@ -80,22 +92,26 @@ class Scores:
         
         self.scores_window = deque(maxlen=episode_score_window)
         self.all_scores = []
+        self.avg_score = 0
     
     def push(self, scores, episode_num, logger=None):
-        avg_score = np.mean(scores)
-        self.scores_window.append(avg_score)
-        self.all_scores.append(avg_score)
+        self.avg_score = np.mean(scores)
+        self.scores_window.append(self.avg_score)
+        self.all_scores.append(self.avg_score)
         
         if logger is not None:
             logger.add_scalars(
-                    'agent%i/mean_%i_episode_rewards' % (self.agent_id, self.episode_score_window),
-                    {'avg_score': avg_score},
+                    'agent%s/mean_%i_episode_rewards' % (str(self.agent_id), self.episode_score_window),
+                    {'avg_score': self.avg_score},
                     episode_num)
             
-    def fetch_window(self):
+    def get_avg_score(self):
+        return self.avg_score
+    
+    def get_score_window(self):
         return self.scores_window
     
-    def fetch_all(self):
+    def get_all_scores(self):
         return self.all_scores
 
 
