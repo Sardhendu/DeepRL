@@ -74,9 +74,9 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
  
  
  
- [//]: # (Image References)
+[//]: # (Image References)
 
-[image2]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
+[image1]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
 
 
  Project 3: Collaboration and Competition [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/src/collab_compete)
