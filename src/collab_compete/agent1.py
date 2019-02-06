@@ -44,7 +44,6 @@ class MDDPG():
     
     def step(self, states, actions, rewards, next_states, dones, running_time_step):
         
-        learning_flag = 0
         
 
         states = np.expand_dims(np.stack(states, axis=0), axis=0)
@@ -72,9 +71,8 @@ class MDDPG():
                 all_dones = all_dones.view(all_dones.shape[0], -1)
 
                 self.learn(all_states, all_actions, all_rewards, all_next_states, all_dones, running_time_step)
-                learning_flag = 1
         
-        if learning_flag == 1:
+        if running_time_step  > self.DATA_TO_BUFFER_BEFORE_LEARNING:
             for ag_num, agent in enumerate(self.AGENTS):
                 agent.update(running_time_step)
                 
@@ -176,6 +174,7 @@ class DDPG:
         return action
     
     def update(self, running_time_step):
+        
         if self.HARD_UPDATE:
             if (running_time_step % self.HARD_UPDATE_FREQUENCY) == 0:
                 for num in range(0, self.NUM_AGENTS):
@@ -185,9 +184,8 @@ class DDPG:
         elif self.SOFT_UPDATE:
             if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
                 # print('Performing soft-update at: ', running_time_step)
-                for num in range(0, self.NUM_AGENTS):
-                    self.soft_update(self.critic_local, self.critic_target, self.TAU)
-                    self.soft_update(self.actor_local, self.actor_target, self.TAU)
+                self.soft_update(self.critic_local, self.critic_target, self.TAU)
+                self.soft_update(self.actor_local, self.actor_target, self.TAU)
         else:
             raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
 

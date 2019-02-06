@@ -222,22 +222,22 @@ class Config:
     # Exploration parameter
     NOISE_AMPLITUDE_FN = lambda: utils.Decay(
             decay_type='multiplicative',
-            alpha=0.5, decay_rate=1, min_value=0.000001,
+            alpha=0.5, decay_rate=1, min_value=0.25,
             start_decay_after_step=256,
-            decay_to_zero_after_step=20000
+            decay_to_zero_after_step=30000
     )
     NOISE_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
     
     # LEARNING PARAMETERS
     ACTOR_LEARNING_RATE = 0.0001
     CRITIC_LEARNING_RATE = 0.001
-    GAMMA = 0.998  # Discounts
+    GAMMA = 0.99  # Discounts
     LEARNING_FREQUENCY = 2
     
     # WEIGHTS UPDATE PARAMETERS
     SOFT_UPDATE = True
-    TAU = 0.001  # Soft update parameter for target_network
-    SOFT_UPDATE_FREQUENCY = 2
+    TAU = 0.0001  # Soft update parameter for target_network
+    SOFT_UPDATE_FREQUENCY = 2  # 2
     DECAY_TAU = False
     TAU_DECAY_RATE = 0.003
     TAU_MIN = 0.05

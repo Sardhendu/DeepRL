@@ -15,4 +15,85 @@ Multi-agent Deep deterministic policy gradient approach:
    * Using a DDPG Actor-Critic architecture it empowers the agent to learn a continuous policy. 
    
    
+
+Vector Environment: 
+----
+
+#### Network Graph:
+
+###### ACTOR-CRITIC:
+
+<div id="image-table">
+    <table>
+	    <tr>
+    	    <td style="padding:5px">
+        	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/actor_.png" width="400" height="400"><figcaption><center>Actor Network</center></figcaption>
+      	    </td>
+             <td style="padding:5px">
+            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/critic_.png" width="400" height="400"><figcaption></center>Critic Network </center></figcaption>
+             </td>
+        </tr>
+    </table>
+</div>
+
+
+#### Results:
+
+    
+   With several model configuration, we found that MADDPG with frequent Soft-update but lesser TAU reaches the target score. The learning seemed pretty unstable, with score rising up slowely till a certain point and then falling to near 0. 
+   
+   * **Hyper-parameter-configuration:**
+        ```python
+             {
+                STATE_SIZE = 24
+                ACTION_SIZE = 2
+                NUM_AGENTS = 2
+                NUM_EPISODES = 1000
+                NUM_TIMESTEPS = 1000
+                #
+                # # MODEL PARAMETERS
+                # SEED = 0
+                BUFFER_SIZE = int(1e04)
+                BATCH_SIZE = 256
+                DATA_TO_BUFFER_BEFORE_LEARNING = 256
+                
+                
+                # LEARNING PARAMETERS
+                ACTOR_LEARNING_RATE = 0.0001
+                CRITIC_LEARNING_RATE = 0.001
+                GAMMA = 0.998  # Discounts
+                LEARNING_FREQUENCY = 2
+                
+                # WEIGHTS UPDATE PARAMETERS
+                SOFT_UPDATE = True
+                TAU = 0.0001  # Soft update parameter for target_network
+                SOFT_UPDATE_FREQUENCY = 2  # 2
+             }
+         ```   
+    
+   Episodic Scores:   
+            
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/score_learning.png)
+  
+  
+   Score Graph:
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/score_graph.png)
+    
+         
+   
+### Caution:
+1. This is a multiagent task, where the agent may not learn anything till 2000 episode. Be patient!
+2. The agent could show a combined score of > 0.5 for more that 100 consecutive episode but there can be scenarios 
+that the score decreases after that, which means the agent learning is unstable.
+
+### Findings:
+1. Increasing the softupdate iteration =32 and soft update TAU from 0.001 to 0.01 helped with some spikes in the few episodes. Would hard update be beneficial?
+2. Having HARD-update at 1000 instead of soft-update actually helped. agent_1 which wasnt learning anything performed better than agent_0. THere were multiple spikes where the average score over 100 consecutive window was more that 0.04 which was great given the fact that the score were always closer to -0.004. This was really a good trial after a long time.
+3. After converting the code to MADDPG with Centralized critic learning hard update didnt perform as before (This is weird). However soft-update with Tau-0.01 and soft-update after 32 iteration, while learning was set at every 16 iteration helped the model learn great amount amid the training where the score reached an average of 0.08 - 0.1 from (episode 400-1200). But then after many iteration the score dropped.
+   -> Was this becasue we have noise decay till 0.001, should we decay noise all the way to 0.000001.
+   -> Should we decrease the TAU = 0.001 and let model shift slowely towards the target.
+4. Noise amplitude decay from 1 to 0.25 with soft-update after every 15 steps didn't help much. Agent average reqard fluctuated from 0 to 0.05. Some iteration it learned and some it didn't. Also this setting had softupdate after every 15 iterations with TAU 0.001. 
+5. Changint the above setting by having constant noise decay (0.5) over 30,000 iteration controlled fluctuation but the output was still not very appeasing. light fluctuation between 0 to 0.07
+   
+  
  
