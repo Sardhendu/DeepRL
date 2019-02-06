@@ -76,7 +76,7 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
  
 [//]: # (Image References)
 
-[image1]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
+[image4]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
 
 
  Project 3: Collaboration and Competition [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/src/collab_compete)
@@ -84,7 +84,7 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
 
 Train two agents to play ping pong. And, the goal of each agent is to keep the ball in play. 
 
-![Trained Agent][image2]
+![Trained Agent][image4]
  
     
    * **Task:** Continuous
