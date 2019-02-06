@@ -96,4 +96,7 @@ that the score decreases after that, which means the agent learning is unstable.
 5. Changint the above setting by having constant noise decay (0.5) over 30,000 iteration controlled fluctuation but the output was still not very appeasing. light fluctuation between 0 to 0.07
    
   
- 
+### Future Work
+1. Tune Hyperparameter to make learning more stable.
+2. Implement Priority Sampling
+3. Implement Competitive setting for the agent and compare results with the cooperative setting 

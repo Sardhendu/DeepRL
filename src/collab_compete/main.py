@@ -3,14 +3,14 @@
 # TODO: Try the Centralized environment (Collaborative)
 
 
-
-import numpy as np
-import torch
-from unityagents import UnityEnvironment
-
-
-from src.collab_compete.agent import Agent, CentralizedAgent
-from src.collab_compete.config import Config
+#
+# import numpy as np
+# import torch
+# from unityagents import UnityEnvironment
+#
+#
+# from src.collab_compete.agent import Agent, CentralizedAgent
+# from src.collab_compete.config import Config
 
 
 # env = UnityEnvironment('./Tennis.app')
@@ -171,10 +171,8 @@ from src.collab_compete.config import Config
 
 
 import numpy as np
-import numpy as np
 
-from src.collab_compete.agent import CentralizedAgent
-from src.collab_compete.agent1 import MDDPG
+from src.collab_compete.agent import MDDPG
 from collections import deque
 from unityagents import UnityEnvironment
 from src.collab_compete.config import Config
