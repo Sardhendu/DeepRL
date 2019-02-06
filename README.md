@@ -72,6 +72,34 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
 ![Trained Agent][image3] 
             
  
+ 
+ 
+ [//]: # (Image References)
+
+[image2]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
+
+
+ Project 3: Collaboration and Competition [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/src/collab_compete)
+-----------
+
+Train two agents to play ping pong. And, the goal of each agent is to keep the ball in play. 
+
+![Trained Agent][image2]
+ 
+    
+   * **Task:** Continuous
+   * **Reward:** +0.1 for hitting the ball over net 
+                  -0.01 if the ball hits the ground or goes out of bounds 
+   * **State space:** 
+      * **Multi Agent Environment:** (2, 24)
+         * 24 dimensions consisting of position, rotation, velocity and etc.   
+   * **Action space:** 
+       Two continuous actions are available, corresponding to movement toward (or away from) the net, and jumping.
+   * **Target Score**
+        The environment is considered solved, when the average (over 100 episodes) of those **scores** is at least +0.5.
+ 
+ 
+ 
  ### TODO:
  1. Modular code for each environment.
  2. Dueling Network Architectures with DQN
