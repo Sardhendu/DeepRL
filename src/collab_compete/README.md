@@ -27,15 +27,15 @@ This project is aimed to make a reinforcement learning multi-agent system that c
     - Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis.app.zip)
     - Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Windows_x86.zip)
     - Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Windows_x86_64.zip)
-   
-2) **continuous-control-multi.ipynb:** Performance of the Agent for various Hyperparameter-configuration for the multi-agent environment  
-3) **config.py:** Hyperparameter configuration. 
-4) **main.py:** Environment instantiation for Continuous Control environment. 
-5) **agent.py:** MADDPG Agent
-6) **model.py:** Actor-Critic neural net architecture
-7) **buffer.py: (../src/buffer.py)** Implementation of Experience Replay and Priority Experience ReplayBuffer
-8) **exploration.py: (../src/exploration.py)** Uses the Ornstein-Uhlenbeck Noise for policy exploration.
-9) **report.md:** Displays the best implemented methods, agent score and future improvements.  
+2)  **continuous-control-multi.ipynb:** Performance of the Agent for various Hyperparameter-configuration for the multi-agent environment  
+3)  **config.py:** Hyperparameter configuration. 
+4)  **main.py:** Environment instantiation for Continuous Control environment. 
+5)  **agent.py:** MADDPG Agent
+6)  **model.py:** Actor-Critic neural net architecture
+7)  **buffer.py: (../src/buffer.py)** Implementation of Experience Replay and Priority Experience ReplayBuffer
+8)  **exploration.py: (../src/exploration.py)** Uses the Ornstein-Uhlenbeck Noise for policy exploration.
+9)  **report.md:** Displays the best implemented methods, agent score and future improvements.  
+10) **Running the project** Running the project is very simple. You just run the "main.py"
 
  
 ### Reference:

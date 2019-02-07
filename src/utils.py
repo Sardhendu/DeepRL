@@ -39,18 +39,24 @@ def hard_update(local_model, target_model):
 
 class Decay:
     def __init__(
-            self, decay_type, alpha, decay_rate, min_value=0, start_decay_after_step=0, decay_to_zero_after_step=0):
+            self, decay_type, alpha, decay_rate, min_value=0, start_decay_after_step=1, decay_after_every_step=1, decay_to_zero_after_step=None):
         """
-        :param alpha:           int/float Initial value
-        :param decay_rate:      float       By how much to decay every step
-        :param min_value:       float/int   No decay beyond this point
+        :param decay_type:                      int/float   Initial value
+        :param alpha:                           float       By how much to decay every step
+        :param decay_rate:                      float       Rate of decay
+        :param min_value:                       float/int   No decay beyond this point
+        :param start_decay_after_step:          int         start decay after n time step
+        :param decay_after_every_step:          int         decay after every n time step
+        :param decay_to_zero_after_step:        int         stop decaying after step
         """
         self.alpha = alpha
         self.decay_rate = decay_rate
         self.min_value = min_value
         self.start_decay_after_step = start_decay_after_step
+        self.decay_after_every_step = decay_after_every_step
         self.decay_to_zero_after_step = decay_to_zero_after_step
-        self.iteration_num = 0
+        
+        self.iteration_num = 1
         
         if decay_type == 'exponential':
             self.decay = self.exponential_decay
@@ -63,7 +69,7 @@ class Decay:
         """
         NOTE: It is best to use this decay after every int(total_episodes/30) episodes.
         Exponential decay are very aggressive they decay pretty fast.
-        Exponential decay best works for learning rate because we dont decay learning rate after every batch is
+        Exponential decay best works for learning rate because we don't decay learning rate after every batch is
         but we decay it after every step and every step. And we may have only run our model for 30-50 steps
         :return:
         """
@@ -73,14 +79,21 @@ class Decay:
         self.alpha = self.alpha * self.decay_rate
         
     def sample(self):
-        if self.iteration_num > self.start_decay_after_step:
+        cond1 = self.iteration_num > self.start_decay_after_step
+        cond2 = (self.iteration_num % self.start_decay_after_step) == 0
+        cond3 = self.iteration_num > self.decay_to_zero_after_step
+        
+        if cond1 and cond2:
             self.decay()
             
-        if self.decay_to_zero_after_step is not None and (self.iteration_num > self.decay_to_zero_after_step):
+        if self.decay_to_zero_after_step is not None and cond3:
             self.alpha = 0
+        else:
+            self.alpha = max(self.min_value, self.alpha)
             
         self.iteration_num += 1
-        return max(self.min_value, self.alpha)
+        return self.alpha
+
 
 class Scores:
     """

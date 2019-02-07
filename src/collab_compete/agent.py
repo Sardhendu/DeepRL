@@ -29,7 +29,7 @@ class MDDPG():
             self.BATCH_SIZE = args.BATCH_SIZE
             self.hard_update = utils.hard_update
     
-            self.AGENTS = [DDPG(args, agent_id, mode='train', log=True) for agent_id in range(self.NUM_AGENTS)]
+            self.AGENTS = [DDPG(args, agent_id, mode=self.MODE, log=True) for agent_id in range(self.NUM_AGENTS)]
             self.MEMORY = buffer.MemoryER(buffer_size=10000, batch_size=256, seed=0, action_dtype='float')
             
         else:

@@ -3,15 +3,15 @@
 # TODO: Try the Centralized environment (Collaborative)
 
 
-#
-# import numpy as np
-# import torch
-# from unityagents import UnityEnvironment
-#
-#
-# from src.collab_compete.agent import Agent, CentralizedAgent
-# from src.collab_compete.config import Config
 
+
+import numpy as np
+
+from src.collab_compete.agent import MDDPG
+from collections import deque
+from unityagents import UnityEnvironment
+from src.collab_compete.config import Config
+from src.utils import Scores
 
 # env = UnityEnvironment('./Tennis.app')
 # brain_name = env.brain_names[0]
@@ -37,57 +37,128 @@
 # print('The state for the first agent looks like:', states[0])
 #
 #
-#
-#
-# class CollabCompete:
-#
-#     def __init__(self, mode='train'):
-#         if mode != 'train':
-#             print('[Mode] Setting to Test Mode')
-#             self.train = False
-#         else:
-#             print('[Mode] Setting to Train Mode')
-#             self.train = True
-#
-#
-#         self.base_env = UnityEnvironment(file_name='Tennis.app')
-#
-#
-#         self.brain_name = self.base_env.brain_names[0]
-#         self.brain = self.base_env.brains[self.brain_name]
-#         self.action_size = self.brain.vector_action_space_size
-#
-#
-#     def reset(self):
-#         self.env_info = self.base_env.reset(train_mode=self.train)[self.brain_name]
-#         return self.get_state()
-#
-#
-#     def get_state(self):
-#         return self.env_info.vector_observations
-#
-#
-#     def step(self, action):
-#         # print(self.brain_name)
-#         # print(action)
-#         self.env_info = self.base_env.step(action)[self.brain_name]  # send the action to the environment
-#         next_states = self.get_state()
-#         rewards = self.env_info.rewards
-#         dones = self.env_info.local_done
-#         return next_states, rewards, dones, None
-#
-#
-#     def close(self):
-#         self.base_env.close()
-#
-#
-#
-#
-#
-#
-#
-#
-#
+
+
+class CollabCompeteEnv:
+
+    def __init__(self, mode='train'):
+        if mode != 'train':
+            print('[Mode] Setting to Test Mode')
+            self.train = False
+        else:
+            print('[Mode] Setting to Train Mode')
+            self.train = True
+
+
+        self.base_env = UnityEnvironment(file_name='Tennis.app')
+
+
+        self.brain_name = self.base_env.brain_names[0]
+        self.brain = self.base_env.brains[self.brain_name]
+        self.action_size = self.brain.vector_action_space_size
+
+
+    def reset(self):
+        self.env_info = self.base_env.reset(train_mode=self.train)[self.brain_name]
+        return self.get_state()
+
+
+    def get_state(self):
+        return self.env_info.vector_observations
+
+
+    def step(self, action):
+        # print(self.brain_name)
+        # print(action)
+        self.env_info = self.base_env.step(action)[self.brain_name]  # send the action to the environment
+        next_states = self.get_state()
+        rewards = self.env_info.rewards
+        dones = self.env_info.local_done
+        return next_states, rewards, dones, None
+
+
+    def close(self):
+        self.base_env.close()
+
+
+
+
+class CollabCompete:
+    
+    def train(self):
+        args = Config
+        env = CollabCompeteEnv()
+        agent_centralized = MDDPG(args=args, mode='train')
+        n_episodes = 10000
+        max_t = 1000
+        scores = []
+        scores_deque = deque(maxlen=100)
+        scores_avg = []
+                
+        running_time_step = 0
+        for i_episode in range(1, n_episodes + 1):
+            rewards = []
+            state = env.reset()  # get the current state (for each agent)
+            
+            # loop over steps
+            for t in range(max_t):
+                # print('Time step: ', t)
+                # select an action
+                action = agent_centralized.act(state, action_value_range=(-1, 1), running_time_step=running_time_step)
+                # take action in environment and set parameters to new values
+    
+                next_state, rewards_vec, done, _ = env.step(action)
+                agent_centralized.step(state, action, rewards_vec, next_state, done, running_time_step)
+    
+                state = next_state
+                rewards.append(rewards_vec)
+                running_time_step += 1
+                
+                if any(done):
+                    break
+            
+            # # calculate episode reward as maximum of individually collected rewards of agents
+            agent_scores_per_episode = np.sum(np.array(rewards), axis=0)
+            max_scores_per_episode = np.max(agent_scores_per_episode)
+            # print(max_scores_per_episode)
+            #
+            scores.append(max_scores_per_episode)  # save most recent score to overall score array
+            scores_deque.append(max_scores_per_episode)  # save most recent score to running window of 100 last scores
+            current_avg_score = np.mean(scores_deque)
+            scores_avg.append(current_avg_score)  # save average of last 100 scores to average score array
+            
+            ########################
+            for ag_num in range(2):
+                tag = 'agent%i/scores_per_episode' % ag_num
+                value_dict = {
+                    'actor_loss': float(agent_scores_per_episode[ag_num])
+                }
+                Config.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
+            
+            tag = 'common/avg_score'
+            value_dict = {'avg_score_100_episode': current_avg_score}
+            step = i_episode
+    
+            agent_centralized.log(tag, value_dict, step)
+            ########################
+            
+            print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score), end="")
+            
+            # log average score every 200 episodes
+            if i_episode % 200 == 0:
+                print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score))
+                agent_centralized.checkpoint(episode_num=i_episode)
+            
+            # break and report success if environment is solved
+            if np.mean(scores_deque) >= .5:
+                print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.3f}'.format(i_episode,
+                                                                                             np.mean(scores_deque)))
+                agent_centralized.checkpoint(episode_num=i_episode)
+                break
+
+CollabCompete().train()
+
+
 # def main():
 #     args = Config
 #     env = CollabCompete()
@@ -170,99 +241,5 @@
 
 
 
-import numpy as np
-
-from src.collab_compete.agent import MDDPG
-from collections import deque
-from unityagents import UnityEnvironment
-from src.collab_compete.config import Config
-from src.utils import Scores
-env = UnityEnvironment(file_name="Tennis.app", no_graphics=True)
-
-# get the default brain
-brain_name = env.brain_names[0]
-brain = env.brains[brain_name]
-
-# agent = MADDPG(seed=2, noise_start=0.5, update_every=2, gamma=1, t_stop_noise=30000)
-CentralizedAgent = MDDPG(args=Config, mode='train')
-n_episodes = 10000
-max_t = 1000
-scores = []
-scores_deque = deque(maxlen=100)
-scores_avg = []
-
-individual_scores = [Scores(100, num) for num in range(0, 2)]
-
-iteration_num = 0
-for i_episode in range(1, n_episodes + 1):
-    rewards = []
-    env_info = env.reset(train_mode=True)[brain_name]  # reset the environment
-    state = env_info.vector_observations  # get the current state (for each agent)
-
-    # loop over steps
-    for t in range(max_t):
-        # print('Time step: ', t)
-        # select an action
-        action = CentralizedAgent.act(state, action_value_range=(-1,1), running_time_step=iteration_num)
-        # take action in environment and set parameters to new values
-        
-        # print('242432 ', action)
-        env_info = env.step(action)[brain_name]
-        next_state = env_info.vector_observations
-        
-        # print('next_sate: ', next_state)
-        
-        rewards_vec = env_info.rewards
-        done = env_info.local_done
-        # update and train agent with returned information
-        CentralizedAgent.step(state, action, rewards_vec, next_state, done, iteration_num)
-        # agent.step(state, action, rewards_vec, next_state, done, iteration_num)
-        state = next_state
-        rewards.append(rewards_vec)
-        iteration_num += 1
-        
-        
-        # print(rewards_vec)
-        if any(done):
-            break
-
-    # # calculate episode reward as maximum of individually collected rewards of agents
-    agent_scores_per_episode = np.sum(np.array(rewards), axis=0)
-    max_scores_per_episode = np.max(agent_scores_per_episode)
-    # print(max_scores_per_episode)
-    #
-    scores.append(max_scores_per_episode)  # save most recent score to overall score array
-    scores_deque.append(max_scores_per_episode)  # save most recent score to running window of 100 last scores
-    current_avg_score = np.mean(scores_deque)
-    scores_avg.append(current_avg_score)  # save average of last 100 scores to average score array
-
-    ########################
-    for ag_num in range(2):
-        tag = 'agent%i/scores_per_episode' % ag_num
-        value_dict = {
-            'actor_loss': float(agent_scores_per_episode[ag_num])
-        }
-        Config.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
-
-    tag = 'common/avg_score'
-    value_dict = {'avg_score_100_episode': current_avg_score}
-    step = i_episode
-
-    CentralizedAgent.log(tag, value_dict, step)
-    ########################
-
-    #
-    print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score), end="")
-
-    # log average score every 200 episodes
-    if i_episode % 200 == 0:
-        print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score))
-        CentralizedAgent.checkpoint(episode_num=i_episode)
-
-    # break and report success if environment is solved
-    if np.mean(scores_deque) >= .5:
-        print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.3f}'.format(i_episode, np.mean(scores_deque)))
-        CentralizedAgent.checkpoint(episode_num=i_episode)
-        break
 
     

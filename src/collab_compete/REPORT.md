@@ -39,8 +39,7 @@ Vector Environment:
 
 #### Results:
 
-    
-   With several model configuration, we found that MADDPG with frequent Soft-update but lesser TAU reaches the target score. The learning seemed pretty unstable, with score rising up slowely till a certain point and then falling to near 0. 
+   With several model configuration, we found that MADDPG with frequent Soft-update but lesser TAU reaches the target score. The learning seemed pretty unstable, with score rising up slowely till a certain point and then falling to near 0. **The environment is solved in 8761 episode**
    
    * **Hyper-parameter-configuration:**
         ```python

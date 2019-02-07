@@ -216,17 +216,19 @@ class Config:
     # # MODEL PARAMETERS
     # SEED = 0
     BUFFER_SIZE = int(1e04)
-    BATCH_SIZE = 256
+    BATCH_SIZE = 512
     DATA_TO_BUFFER_BEFORE_LEARNING = BATCH_SIZE
     
     # Exploration parameter
+    NOISE_FN = lambda: OUNoise(size=2, seed=2)  # (ACTION_SIZE, SEED_VAL)
     NOISE_AMPLITUDE_FN = lambda: utils.Decay(
             decay_type='multiplicative',
             alpha=0.5, decay_rate=1, min_value=0.25,
             start_decay_after_step=256,
+            decay_after_every_step=150,
             decay_to_zero_after_step=30000
     )
-    NOISE_FN = lambda: OUNoise(size=Config.ACTION_SIZE, seed=2)
+    
     
     # LEARNING PARAMETERS
     ACTOR_LEARNING_RATE = 0.0001
