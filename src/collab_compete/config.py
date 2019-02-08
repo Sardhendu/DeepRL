@@ -1,6 +1,6 @@
 
 
-
+import os
 import torch
 from src import utils
 from src.buffer import MemoryER
@@ -204,24 +204,118 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 
+# class Config:
+#     import os
+#     # ENVIRONMEMT PARAMETER
+#     STATE_SIZE = 24
+#     ACTION_SIZE = 2
+#     NUM_AGENTS = 2
+#     NUM_EPISODES = 1000
+#     NUM_TIMESTEPS = 1000
+#     #
+#     # # MODEL PARAMETERS
+#     # SEED = 0
+#     BUFFER_SIZE = int(1e04)
+#     BATCH_SIZE = 256
+#     DATA_TO_BUFFER_BEFORE_LEARNING = BATCH_SIZE
+#
+#     # Exploration parameter
+#     NOISE_FN = lambda: OUNoise(size=2, seed=2)  # (ACTION_SIZE, SEED_VAL)
+#     NOISE_AMPLITUDE_FN = lambda: utils.Decay(
+#             decay_type='multiplicative',
+#             alpha=0.5, decay_rate=1, min_value=0.25,
+#             start_decay_after_step=256,
+#             decay_after_every_step=150,
+#             decay_to_zero_after_step=20000
+#     )
+#
+#
+#     # LEARNING PARAMETERS
+#     ACTOR_LEARNING_RATE = 0.0001
+#     CRITIC_LEARNING_RATE = 0.001
+#     GAMMA = 0.99  # Discounts
+#     LEARNING_FREQUENCY = 2
+#
+#     # WEIGHTS UPDATE PARAMETERS
+#     SOFT_UPDATE = True
+#     TAU = 0.0001  # Soft update parameter for target_network
+#     SOFT_UPDATE_FREQUENCY = 2  # 2
+#     DECAY_TAU = False
+#     TAU_DECAY_RATE = 0.003
+#     TAU_MIN = 0.05
+#
+#     HARD_UPDATE = False
+#     HARD_UPDATE_FREQUENCY = 2000
+#
+#     if (SOFT_UPDATE and HARD_UPDATE) or (not SOFT_UPDATE and not HARD_UPDATE):
+#         raise ValueError('Only one of Hard Update and Soft Update is to be chosen ..')
+#
+#     if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
+#         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
+#
+#     ################### Lambda Functions:
+#     # Agent-1 and Agent-2
+#
+#     # LOG PATHS
+#     MODEL_NAME = 'model_4'
+#     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+#     model_dir = pth + '/models'
+#     base_dir = os.path.join(model_dir, 'collab_compete', '%s' % (MODEL_NAME))
+#
+#     if not os.path.exists(base_dir):
+#         print('creating .... ', base_dir)
+#         os.makedirs(base_dir)
+#
+#     CHECKPOINT_DIR = base_dir
+#     STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
+#     SUMMARY_LOGGER_PATH = os.path.join(base_dir, 'summary')
+#
+#     if not os.path.exists(SUMMARY_LOGGER_PATH):
+#         print('creating .... ', SUMMARY_LOGGER_PATH)
+#         os.makedirs(SUMMARY_LOGGER_PATH)
+#
+#     SUMMARY_LOGGER = Logger(SUMMARY_LOGGER_PATH)
+
+
+
+
 class Config:
-    import os
-    # ENVIRONMEMT PARAMETER
-    STATE_SIZE = 24
-    ACTION_SIZE = 2
-    NUM_AGENTS = 2
-    NUM_EPISODES = 1000
-    NUM_TIMESTEPS = 1000
-    #
-    # # MODEL PARAMETERS
-    # SEED = 0
-    BUFFER_SIZE = int(1e04)
-    BATCH_SIZE = 512
-    DATA_TO_BUFFER_BEFORE_LEARNING = BATCH_SIZE
+    # action_size = 2
+    # seed = 0
+    # n_agents = 2
+    # buffer_size = 10000
+    # batch_size = 256
+    # gamma = 0.99
+    # update_every = 2
+    # noise_start = 1.0
+    # noise_decay = 1.0
+    # t_stop_noise = 30000
     
+    ACTION_SIZE = 2
+    SEED = 0
+    NUM_AGENTS = 2
+    BUFFER_SIZE = 10000
+    BATCH_SIZE = 256
+    DATA_TO_BUFFER_BEFORE_LEARNING = 256
+    GAMMA = 0.99
+    LEARNING_FREQUENCY = 2
+    NOISE_START = 1.0
+    NOISE_DECAY = 1.0
+    STOP_NOISE_AT = 20000
+
+    TAU = 1e-3
+    ACTOR_LEARNING_RATE = 1e-4
+    CRITIC_LEARNING_RATE = 1e-3
+    WEIGHT_DECAY = 0.0
+    IS_HARD_UPDATE = False
+    IS_SOFT_UPDATE = True
+    SOFT_UPDATE_FREQUENCY = 2
+    HARD_UPDATE_FREQUENCY = 2000
+    
+
     # Exploration parameter
-    NOISE_FN = lambda: OUNoise(size=2, seed=2)  # (ACTION_SIZE, SEED_VAL)
-    NOISE_AMPLITUDE_FN = lambda: utils.Decay(
+    NOISE_FN = lambda: OUNoise(size=2, seed=0)  # (ACTION_SIZE, SEED_VAL)
+    NOISE_AMPLITUDE_DECAY_FN = lambda: utils.Decay(
             decay_type='multiplicative',
             alpha=0.5, decay_rate=1, min_value=0.25,
             start_decay_after_step=256,
@@ -230,48 +324,27 @@ class Config:
     )
     
     
-    # LEARNING PARAMETERS
-    ACTOR_LEARNING_RATE = 0.0001
-    CRITIC_LEARNING_RATE = 0.001
-    GAMMA = 0.99  # Discounts
-    LEARNING_FREQUENCY = 2
-    
-    # WEIGHTS UPDATE PARAMETERS
-    SOFT_UPDATE = True
-    TAU = 0.0001  # Soft update parameter for target_network
-    SOFT_UPDATE_FREQUENCY = 2  # 2
-    DECAY_TAU = False
-    TAU_DECAY_RATE = 0.003
-    TAU_MIN = 0.05
-    
-    HARD_UPDATE = False
-    HARD_UPDATE_FREQUENCY = 2000
-    
-    if (SOFT_UPDATE and HARD_UPDATE) or (not SOFT_UPDATE and not HARD_UPDATE):
-        raise ValueError('Only one of Hard Update and Soft Update is to be chosen ..')
-    
-    if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
-        raise ValueError('Soft update frequency can not be smaller than the learning frequency')
-    
     ################### Lambda Functions:
     # Agent-1 and Agent-2
-   
+
     # LOG PATHS
     MODEL_NAME = 'model_4'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'
     base_dir = os.path.join(model_dir, 'collab_compete', '%s' % (MODEL_NAME))
-    
+
     if not os.path.exists(base_dir):
         print('creating .... ', base_dir)
         os.makedirs(base_dir)
-    
+
     CHECKPOINT_DIR = base_dir
     STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
     SUMMARY_LOGGER_PATH = os.path.join(base_dir, 'summary')
-    
+
     if not os.path.exists(SUMMARY_LOGGER_PATH):
         print('creating .... ', SUMMARY_LOGGER_PATH)
         os.makedirs(SUMMARY_LOGGER_PATH)
-    
+
     SUMMARY_LOGGER = Logger(SUMMARY_LOGGER_PATH)
+
+

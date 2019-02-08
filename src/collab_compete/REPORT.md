@@ -39,7 +39,7 @@ Vector Environment:
 
 #### Results:
 
-   With several model configuration, we found that MADDPG with frequent Soft-update but lesser TAU reaches the target score. The learning seemed pretty unstable, with score rising up slowely till a certain point and then falling to near 0. **The environment is solved in 8761 episode**
+   With several model configuration, we found that MADDPG with frequent Soft-update but lesser TAU reaches the target score. The learning seemed pretty unstable, with score rising up slowely till a certain point and then falling to near 0. **The environment is solved in 1200 episode**
    
    * **Hyper-parameter-configuration:**
         ```python
@@ -68,15 +68,20 @@ Vector Environment:
                 TAU = 0.0001  # Soft update parameter for target_network
                 SOFT_UPDATE_FREQUENCY = 2  # 2
              }
-         ```   
+        
+            Episode 200	Average Score: 0.024
+            Episode 400	Average Score: 0.010
+            Episode 600	Average Score: 0.067
+            Episode 800	Average Score: 0.097
+            Episode 1000	Average Score: 0.312
+            Episode 1200	Average Score: 0.215
+            Episode 1400	Average Score: 0.294
+            Episode 1490	Average Score: 0.610
+     ```   
     
    Episodic Scores:   
             
-   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/score_learning.png)
-  
-  
-   Score Graph:
-   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/score_graph.png)
+   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/scores.png)
     
          
    
