@@ -94,24 +94,23 @@ class CollabCompete:
         scores_deque = deque(maxlen=100)
         scores_avg = []
 
-        running_time_step = 0
+        running_timestep = 0
         for i_episode in range(1, n_episodes + 1):
             rewards = []
             state = env.reset()  # get the current state (for each agent)
 
-            # loop over steps
             for t in range(max_t):
                 # print('Time step: ', t)
                 # select an action
-                action = agent_centralized.act(state, action_value_range=(-1, 1), running_time_step=running_time_step)
+                action = agent_centralized.act(state, action_value_range=(-1, 1), running_timestep=running_timestep)
                 # take action in environment and set parameters to new values
-
+                
                 next_state, rewards_vec, done, _ = env.step(action)
-                agent_centralized.step(state, action, rewards_vec, next_state, done, running_time_step)
+                agent_centralized.step(state, action, rewards_vec, next_state, done, running_timestep)
 
                 state = next_state
                 rewards.append(rewards_vec)
-                running_time_step += 1
+                running_timestep += 1
 
                 if any(done):
                     break
@@ -130,7 +129,7 @@ class CollabCompete:
             for ag_num in range(2):
                 tag = 'agent%i/scores_per_episode' % ag_num
                 value_dict = {
-                    'actor_loss': float(agent_scores_per_episode[ag_num])
+                    'scores_per_episode': float(agent_scores_per_episode[ag_num])
                 }
                 Config.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
 
@@ -146,14 +145,14 @@ class CollabCompete:
             # log average score every 200 episodes
             if i_episode % 200 == 0:
                 print('\rEpisode {}\tAverage Score: {:.3f}'.format(i_episode, current_avg_score))
-            #     agent_centralized.checkpoint(episode_num=i_episode)
+                agent_centralized.checkpoint(episode_num=i_episode)
             #
-            # # break and report success if environment is solved
-            # if np.mean(scores_deque) >= .5:
-            #     print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.3f}'.format(i_episode,
-            #                                                                                  np.mean(scores_deque)))
-            #     agent_centralized.checkpoint(episode_num=i_episode)
-            #     break
+            # break and report success if environment is solved
+            if np.mean(scores_deque) >= .7:
+                print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.3f}'.format(i_episode,
+                                                                                             np.mean(scores_deque)))
+                agent_centralized.checkpoint(episode_num=i_episode)
+                break
 
 CollabCompete().train()
 
@@ -180,7 +179,7 @@ CollabCompete().train()
 # scores_deque = deque(maxlen=100)
 # scores_avg = []
 #
-# running_time_step = 0
+# running_timestep = 0
 # for i_episode in range(1, n_episodes + 1):
 #     rewards = []
 #     env_info = env.reset(train_mode=True)[brain_name]  # reset the environment
@@ -190,17 +189,17 @@ CollabCompete().train()
 #     for t in range(max_t):
 #         # #print('Time step: ', t)
 #         # select an action
-#         action = agent_centralized.act(state, action_value_range=(-1, 1), running_time_step=running_time_step)
+#         action = agent_centralized.act(state, action_value_range=(-1, 1), running_timestep=running_timestep)
 #         # take action in environment and set parameters to new values
 #         env_info = env.step(action)[brain_name]
 #         next_state = env_info.vector_observations
 #         rewards_vec = env_info.rewards
 #         done = env_info.local_done
 #         # update and train agent with returned information
-#         agent_centralized.step(state, action, rewards_vec, next_state, done, running_time_step)
+#         agent_centralized.step(state, action, rewards_vec, next_state, done, running_timestep)
 #         state = next_state
 #         rewards.append(rewards_vec)
-#         running_time_step += 1
+#         running_timestep += 1
 #         if any(done):
 #             break
 #

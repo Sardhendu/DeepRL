@@ -56,6 +56,10 @@ class MemoryER:
         return len(self.memory)
 
 
+
+
+
+
 class SumTree(object):
     """
     :: This part of code is taken from simoninithomas (Deep Reinforcement Learning course)

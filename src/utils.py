@@ -80,9 +80,9 @@ class Decay:
         
     def sample(self):
         cond1 = self.iteration_num > self.start_decay_after_step
-        cond2 = (self.iteration_num % self.start_decay_after_step) == 0
+        cond2 = (self.iteration_num % self.decay_after_every_step) == 0
         cond3 = self.iteration_num > self.decay_to_zero_after_step
-        
+
         if cond1 and cond2:
             self.decay()
             
@@ -92,6 +92,7 @@ class Decay:
             self.alpha = max(self.min_value, self.alpha)
             
         self.iteration_num += 1
+        # print(self.iteration_num)
         return self.alpha
 
 
@@ -140,3 +141,20 @@ def debug():
     import matplotlib.pyplot as plt
     plt.plot(decay_value)
     plt.show()
+    
+    
+    
+def debug():
+    NOISE_AMPLITUDE_DECAY_FN = Decay(
+                decay_type='multiplicative',
+                alpha=0.5, decay_rate=0.995, min_value=0.25,
+                start_decay_after_step=15000,
+                decay_after_every_step=100,
+                decay_to_zero_after_step=30000
+        )
+    
+    
+    for i in range(0, 50000):
+        print('Running step ', i)
+        a = NOISE_AMPLITUDE_DECAY_FN.sample()
+        print(a)
