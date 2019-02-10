@@ -194,10 +194,10 @@ Vector Environment:
     <table>
 	    <tr>
     	    <td style="padding:5px">
-        	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent0_best.png" width="400" height="400"><figcaption><center>Actor Network</center></figcaption>
+        	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent0_best.png" width="400" height="400"><figcaption><center>Agent-0</center></figcaption>
       	    </td>
              <td style="padding:5px">
-            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent1_best.png" width="400" height="400"><figcaption></center>Critic Network </center></figcaption>
+            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent1_best.png" width="400" height="400"><figcaption></center>Agent-1 </center></figcaption>
              </td>
         </tr>
     </table>
