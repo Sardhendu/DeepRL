@@ -239,7 +239,7 @@ Vector Environment:
         	    <img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent0_s2_ls.png" width="400" height="400"><figcaption><center>Agent-0</center></figcaption>
       	    </td>
              <td style="padding:5px">
-            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent1_s3_ls.png" width="400" height="400"><figcaption></center>Agent-1 </center></figcaption>
+            	<img src="https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/agent1_s2_ls.png" width="400" height="400"><figcaption></center>Agent-1 </center></figcaption>
              </td>
         </tr>
     </table>
