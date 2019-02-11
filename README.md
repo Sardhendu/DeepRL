@@ -2,13 +2,13 @@
 
 # Implemented Algorithms:
 
-####* Deep-Q-Network (DQN) and Double-DQN [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/navigation/agent.py)   
+#### [Deep-Q-Network (DQN) and Double-DQN](https://github.com/Sardhendu/DeepRL/blob/master/src/navigation/agent.py)   
 
-####* REINFORCE - Policy gradient [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/pong_atari/agent.py)
+#### [REINFORCE - Policy gradient](https://github.com/Sardhendu/DeepRL/blob/master/src/pong_atari/agent.py)
 
-####* Deep Deterministic Policy Gradient (DDPG) [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/agent.py)
+#### [Deep Deterministic Policy Gradient (DDPG)](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/agent.py)
 
-####* Multi Agent Deep Deterministic Policy Gradient (MADDPG) [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/agent.py) 
+#### [Multi Agent Deep Deterministic Policy Gradient (MADDPG)](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/agent.py) 
     
 
 [//]: # (Image References)
