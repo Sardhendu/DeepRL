@@ -1,17 +1,10 @@
 
-## To install with Docker
 
-Create a docker Image:
-
-    docker build --tag deep_rl .
-
-Run the Image, expose Jupyter Notebook at port 8888 and mount the working directory:
-    
-    docker run -it -p 8888:8888 -v /path/to/your/local/workspace:/workspace/DeepRL --name deep_rl deep_rl
-    
-Start Jupyter Notebook:
-    
-    jupyter notebook --no-browser --allow-root --ip 0.0.0.0
+# Implemented Algorithms
+####* Deep-Q-Network (DQN) and Double-DQN [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/navigation/agent.py)   
+####* REINFORCE - Policy gradient [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/pong_atari/agent.py)
+####* Deep Deterministic Policy Gradient (DDPG) [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/agent.py)
+####* Multi Agent Deep Deterministic Policy Gradient (MADDPG) [HERE](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/agent.py) 
     
 
 [//]: # (Image References)
@@ -111,4 +104,21 @@ Train two agents to play ping pong. And, the goal of each agent is to keep the b
 
  
 
- 
+## To install with Docker
+
+Create a docker Image:
+
+   ```bash
+      docker build --tag deep_rl .
+   ```
+
+Run the Image, expose Jupyter Notebook at port 8888 and mount the working directory:
+   ```bash
+      docker run -it -p 8888:8888 -v /path/to/your/local/workspace:/workspace/DeepRL --name deep_rl deep_rl
+   ```
+   
+    
+Start Jupyter Notebook:
+   ```bash
+      jupyter notebook --no-browser --allow-root --ip 0.0.0.0
+   ```
