@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-import src.commons as cmn
+import src.common as cmn
 import src.utils as utils
 
 # TODO: Reset the noise to after every episode
@@ -121,7 +121,7 @@ class DDPGAgent(RLAgent):
         
         Here
             --> θμ : Weights of Actor Network
-            --> Nt : Are the random noise that jitters the action distribution introducing randomness to for exploration
+            --> Nt : Are the random noise that jitters the action distribution introducing randomness for exploration
         """
         state = torch.from_numpy(state).float().to(device)
         state.requires_grad = False
@@ -148,7 +148,7 @@ class DDPGAgent(RLAgent):
             # print('adding: ', state.shape, action.shape, reward, next_state.shape, done)
             self.memory.add(state, action, reward, next_state, done)
     
-        # When the memory is atleast full as the batch size and if the step num is a factor of UPDATE_AFTER_STEP
+        # When the memory is at-least full as the batch size and if the step num is a factor of UPDATE_AFTER_STEP
         # then we learn the parameters of the network
         # Update the weights of local network and soft-update the weighs of the target_network
         # self.t_step = (self.t_step + 1) % self.UPDATE_AFTER_STEP  # Run from {1->UPDATE_AFTER_STEP}
@@ -164,15 +164,15 @@ class DDPGAgent(RLAgent):
         if learning_flag == 1:
             if self.HARD_UPDATE:
                 if (running_time_step % self.HARD_UPDATE_FREQUENCY) == 0:
-                    self.hard_update(self.actor_local, self.actor_target)
-                    self.hard_update(self.critic_local, self.critic_target)
+                    utils.hard_update(self.actor_local, self.actor_target)
+                    utils.hard_update(self.critic_local, self.critic_target)
         
             elif self.SOFT_UPDATE:
                 if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
                     # print('Performing soft-update at: ', running_time_step)
                 
                     if self.DECAY_TAU:
-                        tau = cmn.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
+                        tau = utils.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
                     else:
                         tau = self.TAU
                 

@@ -1,11 +1,4 @@
 
-# TODO: Train separated DDPG agent to learn their own policy (Competitive environment)
-# TODO: Try the Centralized environment (Collaborative)
-
-#
-#
-#
-import torch
 import numpy as np
 from src.collab_compete.agent import MADDPG
 from collections import deque
