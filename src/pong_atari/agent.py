@@ -1,14 +1,13 @@
 
-
 import os
 from collections import defaultdict
 
 import numpy as np
 import torch
 import torch.optim as optim
+
 from src.pong_atari.model import Model
 from src.pong_atari.utils import collect_trajectories
-
 from src import commons as cmn
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -36,6 +35,7 @@ class Agent:
             self.stats_dict = cmn.read_json(self.save_stats_path)
         else:
             self.stats_dict = defaultdict(list)
+            
         self.env = env
         self.policy_nn = Model(args.NET_NAME).to(device)
         self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)

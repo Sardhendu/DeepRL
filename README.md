@@ -21,8 +21,7 @@ Project 1: Navigation [*Link*](https://github.com/Sardhendu/DeepRL/tree/master/s
 Train an agent to navigate (and collect bananas!) in a large, square world.  
 
 ![Trained Agent][image1]
- 
-    
+     
    * **Task:** Episodic
    * **Reward:** +1 for collecting a yellow banana, -1 is provided for collecting a blue banana.  
    * **State space:** 
@@ -33,9 +32,7 @@ Train an agent to navigate (and collect bananas!) in a large, square world.
        - **`1`** - move backward.
        - **`2`** - turn left.
        - **`3`** - turn right.
-       
-       
-       
+         
 [//]: # (Image References)
 
 [image2]: https://user-images.githubusercontent.com/10624937/43851024-320ba930-9aff-11e8-8493-ee547c6af349.gif "Trained Agent"
@@ -48,7 +45,6 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
 
 ![Trained Agent][image2]
  
-    
    * **Task:** Continuous
    * **Reward:** +0.1 for agent's hand in the goal location  
    * **State space:** 
@@ -69,8 +65,6 @@ Train anagent (double-jointed arm) is to maintain its position at the target loc
 ![Trained Agent][image3] 
             
  
- 
- 
 [//]: # (Image References)
 
 [image4]: https://user-images.githubusercontent.com/10624937/42135623-e770e354-7d12-11e8-998d-29fc74429ca2.gif "Trained Agent"
@@ -83,7 +77,6 @@ Train two agents to play ping pong. And, the goal of each agent is to keep the b
 
 ![Trained Agent][image4]
  
-    
    * **Task:** Continuous
    * **Reward:** +0.1 for hitting the ball over net 
                   -0.01 if the ball hits the ground or goes out of bounds 
@@ -97,14 +90,15 @@ Train two agents to play ping pong. And, the goal of each agent is to keep the b
  
  
  
- ### TODO:
- 1. Modular code for each environment.
- 2. Dueling Network Architectures with DQN
- 3. Lambda return (n-step bootstrap)
- 4. Actor-Critic
- 5. Crawler for Continuous Control
- 6. Add Tensorflow graphs instead of manual dictionary graphs.
- 7. Continuous control Test phase.
+### TODO:
+1. Modular code for each environment.
+2. Dueling Network Architectures with DQN
+3. Lambda return (n-step bootstrap)
+4. Actor-Critic
+5. Crawler for Continuous Control
+6. Add Tensorflow graphs instead of manual dictionary graphs for all environments.
+7. Continuous control Test phase.
+8. Parallel Environments and how efficient hte weight sharing is
 
  
 

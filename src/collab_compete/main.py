@@ -5,11 +5,12 @@
 #
 #
 #
+import torch
 import numpy as np
 from src.collab_compete.agent import MADDPG
 from collections import deque
 from unityagents import UnityEnvironment
-from src.collab_compete.config import Config
+from src.collab_compete.config import Config, TestConfig
 
 
 class CollabCompeteEnv:
@@ -57,11 +58,14 @@ class CollabCompeteEnv:
 
 
 class CollabCompete:
+    
+    def __init__(self, args, mode):
+        self.args = args
+        self.env = CollabCompeteEnv(mode)
 
     def train(self):
-        args = Config
-        env = CollabCompeteEnv()
-        agent_centralized = MADDPG(args=args, mode='train')
+        
+        agent_centralized = MADDPG(args=self.args, mode='train')
         n_episodes = 10000
         max_t = 1000
         scores = []
@@ -71,7 +75,7 @@ class CollabCompete:
         running_timestep = 0
         for i_episode in range(1, n_episodes + 1):
             rewards = []
-            state = env.reset()  # get the current state (for each agent)
+            state = self.env.reset()  # get the current state (for each agent)
 
             for t in range(max_t):
                 # print('Time step: ', t)
@@ -79,7 +83,7 @@ class CollabCompete:
                 action = agent_centralized.act(state, action_value_range=(-1, 1), running_timestep=running_timestep)
                 # take action in environment and set parameters to new values
                 
-                next_state, rewards_vec, done, _ = env.step(action)
+                next_state, rewards_vec, done, _ = self.env.step(action)
                 agent_centralized.step(state, action, rewards_vec, next_state, done, running_timestep)
 
                 state = next_state
@@ -128,6 +132,34 @@ class CollabCompete:
                 agent_centralized.checkpoint(episode_num=i_episode)
                 break
 
-CollabCompete().train()
+    def test(self, trials=10, steps=200):
+        self.agent = MADDPG(args=self.args, mode='test')
+        self.agent.load_weights()
+        for i in range(trials):
+            total_reward = np.zeros(self.args.NUM_AGENTS)
+            print('Starting Testing ...')
+            state = self.env.reset()
+            for j in range(steps):
+                action = self.agent.act(state, action_value_range=(-1,1), running_timestep=j)
+                # print(action)
+                # self.env.render()
+                next_states, rewards, dones, _ = self.env.step(action)
+                total_reward += rewards
+                
+                if rewards != 0:
+                    print("Current Reward:", np.max(rewards), "Total Reward:", np.max(total_reward))
+                state = next_states
+                if any(dones):
+                    print('Done.')
+                    break
+        self.env.close()
+
+
+
+train=False
+if train:
+    CollabCompete(args=Config, mode='train').train()
+else:
+    CollabCompete(args=TestConfig, mode='test').test()
 
 

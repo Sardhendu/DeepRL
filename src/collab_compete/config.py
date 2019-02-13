@@ -174,3 +174,30 @@ class Config:
 
     if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
+
+
+class TestConfig:
+    # Environment Parameters
+    SEED = 0
+    STATE_SIZE = 24
+    ACTION_SIZE = 2
+    NUM_AGENTS = 2
+    
+    
+    # Exploration parameter
+    NOISE_FN = None
+    NOISE_AMPLITUDE_DECAY_FN = None
+    
+    # LOG PATHS
+    MODEL_NAME = 'model_3'
+    CHECKPOINT_NUMBER = '1029'
+    pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+    model_dir = pth + '/models'
+    base_dir = os.path.join(model_dir, 'collab_compete', '%s' % (MODEL_NAME))
+    
+    if not os.path.exists(base_dir):
+        print('creating .... ', base_dir)
+        os.makedirs(base_dir)
+    
+    CHECKPOINT_DIR = base_dir
+    

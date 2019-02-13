@@ -32,7 +32,6 @@ def hard_update(local_model, target_model):
     ======
         After t time-step copy the weights of local network to target network
     """
-    # print('[Hard Update] Performing hard update .... ')
     for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
         target_param.data.copy_(local_param.data)
 

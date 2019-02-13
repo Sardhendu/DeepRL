@@ -4,6 +4,7 @@
 -------------
 
 Multi-agent Deep deterministic policy gradient approach: 
+
    * Traditional methods such as Q-learning are not very efficient with multi-agent because of many reasons. Central to it however is the change in policy every step makes the environment non-stationary from the perspective of an individual agent when information does not flow between the agents.
    
    * In has also been shown that learning independent policy using DDPG perform poor in practise. 
@@ -33,9 +34,7 @@ Multi-agent Deep deterministic policy gradient approach:
                 * action = (batch_size, num_agents, action_size)
                 * reward = (batch_size, num_agents, 1)
                 
-   * For the actor model
-                
-                
+   * For the actor model        
         Why do we take experiences for both agent separately, we could do the same by using only 1 sampled experience? Because if we use one 
                 
    
@@ -80,7 +79,6 @@ Vector Environment:
 4. **Setting 2**: Keeping the above mistake in mind it was evident that the agent was benifited with low noise as noise starting at 1 or 2 and decayed slow and fast didn't help. Uisng low noise at 0.5 and further reducing it actually helped.
 
 5. **Setting 3**: The agent learning changes drastically with number of floating points, **Expected but strange** Based on "setting 2", adding noise 2 times to action was equivallent of increasing the noise_amplitude by *2 which is **0.5*2 = 1.0** OR having **action += 2*(self.noise)**. Recording my experiments the results for both the cases was same but differed with setting 2 based on floating point. Below was the difference. These were the print statements.
-
 
         Action value after Double noise (amplitude start at 1)=  :  [[0.38111384 0.03658604]]
         Action value after Double noise (setting 2)              :  [[0.38111383 0.03658604]]
