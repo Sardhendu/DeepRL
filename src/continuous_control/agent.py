@@ -12,7 +12,7 @@ import src.common as cmn
 import src.utils as utils
 
 # TODO: Reset the noise to after every episode
-# TODO: Add Batchnormalization
+# TODO: Add Batch-Normalization
 # TODO: Try scaling the input features
 # TODO: Density plot showing estimated Q values versus observed returns sampled from test (Refer DDPG Paper)
 
@@ -21,37 +21,41 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 
-class RLAgent:
-    def __init__(self, args, env_type, mode='train'):
+class DDPG:
+    def __init__(self, args, env_type, mode='train', agent_id=0):
         self.env_type = env_type
         self.mode = mode
-
+        self.agent_id = agent_id
+        
         if mode == 'train':
+            # Environment parameter
             self.ACTION_SIZE = args.ACTION_SIZE
             self.BATCH_SIZE = args.BATCH_SIZE
-            self.SOFT_UPDATE = args.SOFT_UPDATE
-            self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
-            self.GAMMA = args.GAMMA
-            self.HARD_UPDATE = args.HARD_UPDATE
-            self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
+            
+            # Learning Hyperparameters
             self.BUFFER_SIZE = args.BUFFER_SIZE
             self.BATCH_SIZE = args.BATCH_SIZE
+            self.DATA_TO_BUFFER_BEFORE_LEARNING = args.DATA_TO_BUFFER_BEFORE_LEARNING
+            self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
+            
+            self.IS_SOFT_UPDATE = args.IS_SOFT_UPDATE
+            self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
+            self.IS_HARD_UPDATE = args.IS_HARD_UPDATE
+            self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
+
+            self.GAMMA = args.GAMMA
             self.TAU = args.TAU
             self.DECAY_TAU = args.DECAY_TAU
             self.TAU_DECAY_RATE = args.TAU_DECAY_RATE
             self.TAU_MIN = args.TAU_MIN
-    
-            self.NOISE = args.NOISE
-            self.EPSILON_GREEDY = args.EPSILON_GREEDY
-            self.EPSILON = args.EPSILON_GREEDY
-            self.EPSILON_DECAY = args.EPSILON_DECAY
-            self.EPSILON_MIN = args.EPSILON_MIN
-    
-            self.LEARNING_FREQUENCY = args.LEARNING_FREQUENCY
+
+            # EXPLORATION - NOISE
+            self.NOISE = args.NOISE_FN()
+            self.NOISE_AMPLITUDE_DEACAY = args.NOISE_AMPLITUDE_DECAY_FN()
         
-            self.STATS_JSON_PATH = args.STATS_JSON_PATH
+            # Logger
             self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
-            
+            self.SUMMARY_LOGGER = args.SUMMARY_LOGGER
             
             # Create the Local Network and Target Network for the Actor
             self.actor_local = args.ACTOR_NETWORK_FN()
@@ -63,54 +67,55 @@ class RLAgent:
             self.critic_target = args.CRITIC_NETWORK_FN()
             self.critic_local_optimizer = args.CRITIC_OPTIMIZER_FN(self.critic_local.parameters())
             
-            #### Methods
-            self.exploration_policy = args.EXPLORATION_POLICY_FN()
+            #### MEMORY
             self.memory = args.MEMORY_FN()
             
-    
-            self.stats_dict = defaultdict(list)
-        
         else:
             print('[Agent] Loading Actor/Critic weights')
-            self.ACTOR_CHECKPOINT_PATH = args.ACTOR_CHECKPOINT_PATH
-            self.CRITIC_CHECHPOINT_PATH = args.CRITIC_CHECKPOINT_PATH
             self.actor_local = args.ACTOR_NETWORK_FN()
             self.critic_local = args.CRITIC_NETWORK_FN()
 
-            self.exploration_policy = args.EXPLORATION_POLICY_FN()
-            self.actor_local.load_state_dict(torch.load(self.ACTOR_CHECKPOINT_PATH))
-            self.critic_local.load_state_dict(torch.load(self.CRITIC_CHECHPOINT_PATH))
-            print('[Agent] Actor weights loaded from: ', self.ACTOR_CHECKPOINT_PATH)
-            print('[Agent] Critic weights loaded from: ', self.CRITIC_CHECHPOINT_PATH)
-            
-        self.soft_update = utils.soft_update
-        self.hard_update = utils.soft_update
+            self.CHECKPOINT_NUMBER = args.CHECKPOINT_NUMBER
 
-    def act(self, state):
+    def load_weights(self):
         """
-        
-        :param state:
-        :return:        A numpy array with action value distribution
-        
-        ### Actor Action: Actons are chosen by actor
-        Select action "at" according to the current policy and the exploration noise
-        at = μ(st | θμ) + Nt
-            
+            Add weights to the local network
+        :return:
         """
+        if self.mode == 'train':
+            for ag_type in ['actor', 'critic']:
+                checkpoint_path = os.path.join(
+                        self.CHECKPOINT_DIR,
+                        '%s_local_%s_%s.pth' % (str(ag_type), str(self.agent_id), str(self.CHECKPOINT_NUMBER))
+                )
+                print('Loading weights for %s_local for agent_%s' % (str(ag_type), str(self.agent_id)))
+            
+                if ag_type == 'actor':
+                    self.actor_local.load_state_dict(torch.load(checkpoint_path))
+                else:
+                    self.critic_local.load_state_dict(torch.load(checkpoint_path))
+    
+        elif self.mode == 'test':
+            checkpoint_path = os.path.join(
+                    self.CHECKPOINT_DIR,
+                    'actor_local_%s_%s.pth' % (str(self.agent_id), str(self.CHECKPOINT_NUMBER))
+            )
+            print('Loading weights for actor_local for agent_%s from \n %s' % (str(self.agent_id), str(checkpoint_path)))
+            self.actor_local.actor_local.load_state_dict(torch.load(checkpoint_path))
+    
+        else:
+            raise ValueError('mode =  train or test permitted ....')
         
-        # Set the state to evaluation get actions and reset network to training phase
-        # print('4223423 ', state)
-        pass
-
-
+    def log(self, tag, value_dict, step):
+        self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)
     
     
-class DDPGAgent(RLAgent):
-    def __init__(self, args, env_type, mode):
-        super().__init__(args, env_type, mode)
+class DDPGAgent(DDPG):
+    def __init__(self, args, env_type, mode, agent_id):
+        super().__init__(args, env_type, mode,  agent_id)
 
         
-    def act(self, state, add_noise=True, action_value_range=(-1, 1)):
+    def act(self, state, action_value_range, running_timestep):
         """
         :param state:               Input n dimension state feature space
         :param add_noise:           bool True or False
@@ -133,7 +138,24 @@ class DDPGAgent(RLAgent):
         # print(actions)
         # Add Random noise to the action space distribution to foster exploration
         if self.mode == 'train':
-            actions += self.exploration_policy.sample()
+            self.noise_amplitude = self.NOISE_AMPLITUDE_DEACAY.sample()
+            self.noise_val = self.NOISE.sample() * self.noise_amplitude
+            # print('self.noise_val: ', self.noise_val)
+            # print('actions: ', actions)
+            actions += self.noise_val
+            
+        if self.mode=='train' and self.log:
+            tag = 'agent%i/noise_amplitude' % self.agent_id
+            value_dict = {
+                'noise_amplitude': float(self.noise_amplitude)
+            }
+            self.log(tag, value_dict, running_timestep)
+
+            # tag = 'agent%i/noise_value' % self.agent_id
+            # value_dict = {
+            #     'noise_value_for_action_0': float(self.noise_val[0])
+            # }
+            # self.log(tag, value_dict, running_timestep)
         
         # Clip the actions to the the min and max limit of action probs
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
@@ -141,7 +163,7 @@ class DDPGAgent(RLAgent):
         return actions
 
 
-    def step(self, states, actions, rewards, next_states, dones, episode_num, running_time_step):
+    def step(self, states, actions, rewards, next_states, dones, running_timestep):
     
         # Store experience to the replay buffer
         for state, action, reward, next_state, done in zip(states, actions, rewards, next_states, dones):
@@ -153,36 +175,25 @@ class DDPGAgent(RLAgent):
         # Update the weights of local network and soft-update the weighs of the target_network
         # self.t_step = (self.t_step + 1) % self.UPDATE_AFTER_STEP  # Run from {1->UPDATE_AFTER_STEP}
         # print('[Step] Current Step is: ', self.tstep)
-        learning_flag = 0
-        if (running_time_step % self.LEARNING_FREQUENCY) == 0:
+        if (running_timestep % self.LEARNING_FREQUENCY) == 0:
             if len(self.memory) > self.BATCH_SIZE:
                 experiences = self.memory.sample()
-                self.learn(experiences, self.GAMMA)
+                self.learn(experiences, self.GAMMA, running_timestep)
 
-                learning_flag = 1
-    
-        if learning_flag == 1:
-            if self.HARD_UPDATE:
-                if (running_time_step % self.HARD_UPDATE_FREQUENCY) == 0:
+        if running_timestep > self.DATA_TO_BUFFER_BEFORE_LEARNING:
+            if self.IS_HARD_UPDATE:
+                if (running_timestep % self.HARD_UPDATE_FREQUENCY) == 0:
                     utils.hard_update(self.actor_local, self.actor_target)
-                    utils.hard_update(self.critic_local, self.critic_target)
-        
-            elif self.SOFT_UPDATE:
-                if (running_time_step % self.SOFT_UPDATE_FREQUENCY) == 0:
-                    # print('Performing soft-update at: ', running_time_step)
-                
-                    if self.DECAY_TAU:
-                        tau = utils.exp_decay(self.TAU, self.TAU_DECAY_RATE, episode_num, self.TAU_MIN)
-                    else:
-                        tau = self.TAU
-                
-                    self.soft_update(self.critic_local, self.critic_target, tau)
-                    self.soft_update(self.actor_local, self.actor_target, tau)
+    
+            elif self.IS_SOFT_UPDATE:
+                if (running_timestep % self.SOFT_UPDATE_FREQUENCY) == 0:
+                    utils.soft_update(self.critic_local, self.critic_target, self.TAU)
+                    utils.soft_update(self.actor_local, self.actor_target, self.TAU)
             else:
                 raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
 
                 
-    def learn(self, experiences, gamma):
+    def learn(self, experiences, gamma, running_timestep):
         """
         
         :param experiences:
@@ -190,7 +201,7 @@ class DDPGAgent(RLAgent):
         :return:
         
         """
-        # print('Learning .... ', episode_num, running_time_step)
+        # print('Learning .... ', episode_num, running_timestep)
         states, actions, rewards, next_states, dones = experiences
         
         #-------------------- Optimize Critic -----------------------#
@@ -223,30 +234,22 @@ class DDPGAgent(RLAgent):
         actor_loss.backward()
         self.actor_local_optimizer.step()
 
-        # Store into stats dictionary
-        self.critic_loss.append(abs(float(critic_loss)))
-        self.actor_loss.append(abs(float(actor_loss)))
-        self.rewards.append(rewards.cpu().data.numpy())
-        
+        # ------------------------- LOGGING --------------------------#
+        if self.log:
+            tag = 'agent%i/actor_loss' % self.agent_id
+            value_dict = {
+                'actor_loss': abs(float(actor_loss))
+            }
+            self.log(tag, value_dict, running_timestep)
+    
+            tag = 'agent%i/critic_loss' % self.agent_id
+            value_dict = {
+                'critic_loss': abs(float(critic_loss)),
+            }
+            self.log(tag, value_dict, running_timestep)
 
     def reset(self):
-        self.exploration_policy.reset()
-        
-    
-        self.rewards = []
-        self.critic_loss = []
-        self.actor_loss = []
-        
-    def save_stats(self):
-        self.stats_dict['rewards'].append([np.mean(self.rewards), np.std(self.rewards)])
-        self.stats_dict['actor_loss'].append([np.mean(self.actor_loss), np.std(self.actor_loss)])
-        self.stats_dict['critic_loss'].append([np.mean(self.critic_loss), np.std(self.critic_loss)])
-        # print('')
-        # print(np.mean(self.rewards), np.var(self.rewards))
-        # print(np.mean(self.actor_loss), np.var(self.actor_loss))
-        # print(np.mean(self.critic_loss), np.var(self.critic_loss))
-        
-        cmn.dump_json(self.STATS_JSON_PATH, self.stats_dict)
+        self.NOISE.reset()
         
     def save_checkpoints(self, episode_num):
         e_num = episode_num

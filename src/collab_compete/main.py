@@ -3,7 +3,7 @@ import numpy as np
 from src.collab_compete.agent import MADDPG
 from collections import deque
 from unityagents import UnityEnvironment
-from src.collab_compete.config import Config, TestConfig
+from src.collab_compete.config import TrainConfig, TestConfig
 
 
 class CollabCompeteEnv:
@@ -151,7 +151,7 @@ class CollabCompete:
 
 train=False
 if train:
-    CollabCompete(args=Config, mode='train').train()
+    CollabCompete(args=TrainConfig, mode='train').train()
 else:
     CollabCompete(args=TestConfig, mode='test').test()
 
