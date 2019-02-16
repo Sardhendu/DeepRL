@@ -1,6 +1,6 @@
 
 import torch
-
+import os
 from src import utils
 from src.exploration import OUNoise
 from src.continuous_control.model import Actor, Critic
@@ -65,18 +65,6 @@ class TrainConfig:
     # Memory
     MEMORY_FN = lambda: MemoryER(TrainConfig.BUFFER_SIZE, TrainConfig.BATCH_SIZE, seed=2, action_dtype='float')
     
-    # # USE PATH
-    # MODEL_NAME = 'model_1'
-    # model_dir =  pth + '/models'
-    # base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
-    # if not os.path.exists(base_dir):
-    #     print('creating .... ', base_dir)
-    #     os.makedirs(base_dir)
-    # #
-    # STATS_JSON_PATH = os.path.join(base_dir, 'stats.json')
-    # CHECKPOINT_DIR = base_dir
-
-
     # LOG PATHS
     MODEL_NAME = 'model_5'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
@@ -103,3 +91,32 @@ class TrainConfig:
 
     if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
+
+
+
+class TestConfig:
+    # Environment Parameters
+    SEED = 0
+    STATE_SIZE = 33
+    ACTION_SIZE = 4
+    NUM_AGENTS = 20
+
+    # Exploration parameter
+    NOISE_FN = None
+    NOISE_AMPLITUDE_DECAY_FN = None
+    
+    ACTOR_NETWORK_FN = lambda: Actor(
+            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+
+    # LOG PATHS
+    MODEL_NAME = 'model_5'
+    CHECKPOINT_NUMBER = '1190'
+    pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+    model_dir = pth + '/models'
+    base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
+
+    if not os.path.exists(base_dir):
+        print('creating .... ', base_dir)
+        os.makedirs(base_dir)
+
+    CHECKPOINT_DIR = base_dir

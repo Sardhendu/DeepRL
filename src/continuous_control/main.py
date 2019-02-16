@@ -2,7 +2,7 @@
 
 import numpy as np
 from collections import deque
-from src.continuous_control.config import TrainConfig
+from src.continuous_control.config import TrainConfig, TestConfig
 from unityagents import UnityEnvironment
 from src.continuous_control.agent import DDPGAgent
 
@@ -53,6 +53,7 @@ class DDPG:
     def __init__(self, args, env_type, mode):
         self.args = args
         self.env_type = env_type
+        self.agent_id = 0
         self.env = ContinuousControl(env_type=env_type, mode=mode)
         
     def train(self):
@@ -63,7 +64,7 @@ class DDPG:
         else:
             raise ValueError('Only single and multi environment accepted')
             
-        self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=0)
+        self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=self.agent_id)
         
         all_scores = []
         scores_window = deque(maxlen=100)
@@ -86,7 +87,13 @@ class DDPG:
             avg_score = np.mean(scores)
             scores_window.append(avg_score)
             all_scores.append(avg_score)
-            
+
+            ########################
+            tag = 'common/avg_score'
+            value_dict = {'avg_score_100_episode': avg_score}
+            step = i_episode
+
+            self.agent.log(tag, value_dict, step)
             
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
             if i_episode % 100 == 0:
@@ -102,25 +109,52 @@ class DDPG:
         
         return all_scores
 
-    def test(self, agent, trials=3, steps=200):
-        NUM_AGENTS = 20
+    # def test(self, agent, trials=3, steps=200):
+    #     NUM_AGENTS = 20
+    #     for i in range(trials):
+    #         scores = np.zeros(NUM_AGENTS)
+    #         print('Starting Testing ...')
+    #         state = self.env.reset()
+    #         for j in range(steps):
+    #             action = agent.act(state)
+    #             # env.render()
+    #             next_state, reward, done, _ = self.env.step(action)
+    #             state = next_state
+    #             # print(reward)
+    #             scores += reward
+    #             if reward != 0:
+    #                 print("Current Reward:", reward, "Total Reward:", scores)
+    #             if done:
+    #                 print('Done.')
+    #                 break
+    #     self.env.close()
+
+    def test(self, trials=10, steps=200):
+        self.agent = DDPGAgent(self.args, self.env_type, mode='test', agent_id=self.agent_id)
+        self.agent.load_weights()
         for i in range(trials):
-            scores = np.zeros(NUM_AGENTS)
+            total_reward = np.zeros(self.args.NUM_AGENTS)
             print('Starting Testing ...')
             state = self.env.reset()
             for j in range(steps):
-                action = agent.act(state)
-                # env.render()
-                next_state, reward, done, _ = self.env.step(action)
-                state = next_state
-                # print(reward)
-                scores += reward
-                if reward != 0:
-                    print("Current Reward:", reward, "Total Reward:", scores)
-                if done:
+                action = self.agent.act(state, action_value_range=(-1, 1), running_timestep=j)
+                # print(action)
+                # self.env.render()
+                next_states, rewards, dones, _ = self.env.step(action)
+                total_reward += rewards
+        
+                if rewards != 0:
+                    print("Current Reward:", np.max(rewards), "Total Reward:", np.max(total_reward))
+                state = next_states
+                if any(dones):
                     print('Done.')
                     break
-        self.env.close()
-        
-obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
-obj_.train()
+      
+    
+mode = 'test'
+if mode == 'train':
+    obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
+    obj_.train()
+else :
+    obj_ = DDPG(args=TestConfig, env_type='multi', mode='test')
+    obj_.test()

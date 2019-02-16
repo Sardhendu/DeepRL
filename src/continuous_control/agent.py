@@ -72,9 +72,10 @@ class DDPG:
             
         else:
             print('[Agent] Loading Actor/Critic weights')
+            
             self.actor_local = args.ACTOR_NETWORK_FN()
-            self.critic_local = args.CRITIC_NETWORK_FN()
-
+            # self.critic_local = args.CRITIC_NETWORK_FN()
+            self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
             self.CHECKPOINT_NUMBER = args.CHECKPOINT_NUMBER
 
     def load_weights(self):
@@ -101,7 +102,7 @@ class DDPG:
                     'actor_local_%s_%s.pth' % (str(self.agent_id), str(self.CHECKPOINT_NUMBER))
             )
             print('Loading weights for actor_local for agent_%s from \n %s' % (str(self.agent_id), str(checkpoint_path)))
-            self.actor_local.actor_local.load_state_dict(torch.load(checkpoint_path))
+            self.actor_local.load_state_dict(torch.load(checkpoint_path))
     
         else:
             raise ValueError('mode =  train or test permitted ....')
@@ -254,14 +255,18 @@ class DDPGAgent(DDPG):
     def save_checkpoints(self, episode_num):
         e_num = episode_num
         torch.save(
-            self.actor_local.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'actor_local_%s.pth' % str(e_num))
+            self.actor_local.state_dict(), os.path.join(
+                        self.CHECKPOINT_DIR, 'actor_local_%s_%s.pth' % (str(self.agent_id), str(e_num)))
         )
         torch.save(
-            self.actor_target.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'actor_target_%s.pth' % str(e_num))
+            self.actor_target.state_dict(), os.path.join(
+                        self.CHECKPOINT_DIR, 'actor_target_%s_%s.pth' % (str(self.agent_id), str(e_num)))
         )
         torch.save(
-            self.critic_local.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'critic_local_%s.pth' % str(e_num))
+            self.critic_local.state_dict(), os.path.join(
+                        self.CHECKPOINT_DIR, 'critic_local_%s_%s.pth' % (str(self.agent_id), str(e_num)))
         )
         torch.save(
-            self.critic_target.state_dict(), os.path.join(self.CHECKPOINT_DIR, 'critic_target_%s.pth' % str(e_num))
+            self.critic_target.state_dict(), os.path.join(
+                        self.CHECKPOINT_DIR, 'critic_target_%s_%s.pth' % (str(self.agent_id), str(e_num)))
         )
