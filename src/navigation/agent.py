@@ -7,8 +7,8 @@ import torch
 import torch.nn.functional as F
 from src.buffer import MemoryER, MemoryPER
 from src.navigation import model
+from src import utils
 
-from src import commons as cmn
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -58,25 +58,6 @@ class RLAgent:
         self.t_step = 0
         
         # Create a Statistics dictionary
-        self.get_stats(reset=True)
-        
-        self.dump_stats_at_eposide = 100
-    
-    def dump_stats(self):
-        if not os.path.exists(os.path.dirname(self.STATS_JSON_PATH)):
-            os.makedirs(os.path.dirname(self.STATS_JSON_PATH))
-        
-        cmn.dump_json(self.STATS_JSON_PATH, self.stats)
-    
-    def get_stats(self, reset):
-        if reset:
-            self.stats = defaultdict(list)
-        elif os.path.exists(self.STATS_JSON_PATH):
-            self.stats = cmn.read_json(self.STATS_JSON_PATH)
-        else:
-            self.stats = defaultdict(list)
-        
-        return self.stats
     
     def action(self, state, eps=0.):
         """
@@ -107,41 +88,6 @@ class RLAgent:
             return np.argmax(action_values.cpu().data.numpy())
         else:
             return np.random.choice(np.arange(self.ACTION_SIZE))
-
-    def soft_update(self, local_model, target_model, tau):
-        """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
-
-        Params
-        ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
-            tau (float): interpolation parameter
-
-        Idea
-        ======
-            Instead of performing a hard update on Fixed-Q-targets after say 10000 timesteps, perform soft-update
-            (move slightly) every time-step
-        """
-        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
-    
-    def hard_update(self, local_model, target_model):
-        """Hard update model parameters.
-        θ_target = θ_local
-
-        Params
-        ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
-
-        Idea
-        ======
-            After t time-step copy the weights of local network to target network
-        """
-        # print('[Hard Update] Performuing hard update .... ')
-        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-            target_param.data.copy_(local_param.data)
     
     def learn(self, experiences, gamma, episode_num, **kwargs):
         """
@@ -269,15 +215,13 @@ class DDQNAgent(RLAgent):
         # Soft-update the target network.
         if self.SOFT_UPDATE:
             if self.DECAY_TAU:
-                tau = cmn.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
+                tau = utils.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
             else:
                 tau = self.TAU
         
             self.soft_update(self.local_network, self.target_network, tau)
     
-        # DUMP STATS:
-        if (episode_num + 1) % self.dump_stats_at_eposide == 0:
-            self.dump_stats()
+ 
 
 
 class DDQNAgentPER(RLAgent):
@@ -381,9 +325,5 @@ class DDQNAgentPER(RLAgent):
         # Soft-update the target network.
         if self.SOFT_UPDATE:
             # print('Going to Soft Update: ...............', self.t_step)
-            if self.DECAY_TAU:
-                tau = cmn.exp_decay(self.TAU, self.TAU_DECAY, episode_num, self.TAU_MIN)
-            else:
-                tau = self.TAU
-            
-            self.soft_update(self.local_network, self.target_network, tau)
+            tau = self.TAU
+            utils.soft_update(self.local_network, self.target_network, tau)

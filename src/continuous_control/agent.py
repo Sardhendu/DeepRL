@@ -30,7 +30,7 @@ class DDPG:
         if mode == 'train':
             # Environment parameter
             self.ACTION_SIZE = args.ACTION_SIZE
-            self.BATCH_SIZE = args.BATCH_SIZE
+            self.STATE_SIZE = args.STATE_SIZE
             
             # Learning Hyperparameters
             self.BUFFER_SIZE = args.BUFFER_SIZE
@@ -115,7 +115,6 @@ class DDPGAgent(DDPG):
     def __init__(self, args, env_type, mode, agent_id):
         super().__init__(args, env_type, mode,  agent_id)
 
-        
     def act(self, state, action_value_range, running_timestep):
         """
         :param state:               Input n dimension state feature space
@@ -145,7 +144,7 @@ class DDPGAgent(DDPG):
             # print('actions: ', actions)
             actions += self.noise_val
             
-        if self.mode=='train' and self.log:
+        if self.mode == 'train':
             tag = 'agent%i/noise_amplitude' % self.agent_id
             value_dict = {
                 'noise_amplitude': float(self.noise_amplitude)
@@ -162,7 +161,6 @@ class DDPGAgent(DDPG):
         actions = np.clip(actions, action_value_range[0], action_value_range[1])
         # print('Actions Value: ', actions)
         return actions
-
 
     def step(self, states, actions, rewards, next_states, dones, running_timestep):
     
@@ -236,18 +234,17 @@ class DDPGAgent(DDPG):
         self.actor_local_optimizer.step()
 
         # ------------------------- LOGGING --------------------------#
-        if self.log:
-            tag = 'agent%i/actor_loss' % self.agent_id
-            value_dict = {
-                'actor_loss': abs(float(actor_loss))
-            }
-            self.log(tag, value_dict, running_timestep)
-    
-            tag = 'agent%i/critic_loss' % self.agent_id
-            value_dict = {
-                'critic_loss': abs(float(critic_loss)),
-            }
-            self.log(tag, value_dict, running_timestep)
+        tag = 'agent%i/actor_loss' % self.agent_id
+        value_dict = {
+            'actor_loss': abs(float(actor_loss))
+        }
+        self.log(tag, value_dict, running_timestep)
+
+        tag = 'agent%i/critic_loss' % self.agent_id
+        value_dict = {
+            'critic_loss': abs(float(critic_loss)),
+        }
+        self.log(tag, value_dict, running_timestep)
 
     def reset(self):
         self.NOISE.reset()

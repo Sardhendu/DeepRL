@@ -15,39 +15,27 @@ class CollabCompeteEnv:
         else:
             print('[Mode] Setting to Train Mode')
             self.train = True
-
-
         self.base_env = UnityEnvironment(file_name='Tennis.app')
-
-
         self.brain_name = self.base_env.brain_names[0]
         self.brain = self.base_env.brains[self.brain_name]
         self.action_size = self.brain.vector_action_space_size
 
-
     def reset(self):
         self.env_info = self.base_env.reset(train_mode=self.train)[self.brain_name]
         return self.get_state()
-
-
+    
     def get_state(self):
         return self.env_info.vector_observations
 
-
     def step(self, action):
-        # print(self.brain_name)
-        # print(action)
         self.env_info = self.base_env.step(action)[self.brain_name]  # send the action to the environment
         next_states = self.get_state()
         rewards = self.env_info.rewards
         dones = self.env_info.local_done
         return next_states, rewards, dones, None
 
-
     def close(self):
         self.base_env.close()
-
-
 
 
 class CollabCompete:
