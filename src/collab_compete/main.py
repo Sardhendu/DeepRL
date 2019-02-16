@@ -3,7 +3,7 @@ import numpy as np
 from src.collab_compete.agent import MADDPG
 from collections import deque
 from unityagents import UnityEnvironment
-from src.collab_compete.config import Config, TestConfig
+from src.collab_compete.config import TrainConfig, TestConfig
 
 
 class CollabCompeteEnv:
@@ -102,7 +102,7 @@ class CollabCompete:
                 value_dict = {
                     'scores_per_episode': float(agent_scores_per_episode[ag_num])
                 }
-                Config.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
+                self.args.SUMMARY_LOGGER.add_scalars(tag, value_dict, i_episode)
 
             tag = 'common/avg_score'
             value_dict = {'avg_score_100_episode': current_avg_score}
@@ -133,7 +133,7 @@ class CollabCompete:
             print('Starting Testing ...')
             state = self.env.reset()
             for j in range(steps):
-                action = self.agent.act(state, action_value_range=(-1,1), running_timestep=j)
+                action = self.agent.act(state, action_value_range=(-1, 1), running_timestep=j)
                 # print(action)
                 # self.env.render()
                 next_states, rewards, dones, _ = self.env.step(action)
@@ -151,7 +151,7 @@ class CollabCompete:
 
 train=False
 if train:
-    CollabCompete(args=Config, mode='train').train()
+    CollabCompete(args=TrainConfig, mode='train').train()
 else:
     CollabCompete(args=TestConfig, mode='test').test()
 

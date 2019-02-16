@@ -110,7 +110,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 
-class Config:
+class TrainConfig:
     # Environment Parameters
     SEED = 0
     STATE_SIZE = 24

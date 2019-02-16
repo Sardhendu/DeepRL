@@ -171,6 +171,7 @@ class DDPG():
         
         if self.mode == 'train':
             self.NOISE = args.NOISE_FN()
+            self.NOISE_AMPLITUDE_DEACAY = args.NOISE_AMPLITUDE_DECAY_FN()
         
             self.TAU = args.TAU
             self.ACTOR_LEARNING_RATE = args.ACTOR_LEARNING_RATE
@@ -181,8 +182,7 @@ class DDPG():
             self.IS_SOFT_UPDATE = args.IS_SOFT_UPDATE
             self.SOFT_UPDATE_FREQUENCY = args.SOFT_UPDATE_FREQUENCY
             self.HARD_UPDATE_FREQUENCY = args.HARD_UPDATE_FREQUENCY
-            self.NOISE_AMPLITUDE_DEACAY = args.NOISE_AMPLITUDE_DECAY_FN()
-
+           
             self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
             self.SUMMARY_LOGGER = args.SUMMARY_LOGGER
 
@@ -203,7 +203,7 @@ class DDPG():
             utils.hard_update(self.critic_local, self.critic_target)
     
             # Noise process
-            self.noise = args.NOISE_FN()
+            # self.NOISE = args.NOISE_FN()
             
         else:
             self.actor_local = model.Actor(self.STATE_SIZE, self.ACTION_SIZE, [256, 256, 2], self.SEED).to(device)
@@ -221,7 +221,7 @@ class DDPG():
 
         if self.mode == 'train':
             self.noise_amplitude = self.NOISE_AMPLITUDE_DEACAY.sample()
-            self.noise_val = self.noise.sample() * self.noise_amplitude
+            self.noise_val = self.NOISE.sample() * self.noise_amplitude
             action += self.noise_val
 
         if self.mode=='train' and self.log:
@@ -248,7 +248,7 @@ class DDPG():
         return np.clip(action, -1, 1)
 
     def reset(self):
-        self.noise.reset()
+        self.NOISE.reset()
 
     def learn(self, agent_id, experiences, gamma, all_next_actions, all_actions_pred, running_timestep):
         """
@@ -505,7 +505,7 @@ class DDPG():
 #         utils.hard_update(self.critic_local, self.critic_target)
 #
 #         # Noise process
-#         self.noise = args.NOISE_FN()
+#         self.NOISE = args.NOISE_FN()
 #
 #     def act(self, state, running_timestep):
 #         """Returns actions for given state as per current policy."""
@@ -518,7 +518,7 @@ class DDPG():
 #         self.actor_local.train()
 #
 #         if self.mode == 'train':
-#             self.noise_val = self.noise.sample() * self.noise_amplitude
+#             self.noise_val = self.NOISE.sample() * self.noise_amplitude
 #             # print(self.noise_val)
 #             action += self.noise_val
 #             action += self.noise_val
@@ -533,7 +533,7 @@ class DDPG():
 #         return np.clip(action, -1, 1)
 #
 #     def reset(self):
-#         self.noise.reset()
+#         self.NOISE.reset()
 #
 #     def learn(self, agent_id, experiences, gamma, all_next_actions, all_actions_pred, running_timestep):
 #         """

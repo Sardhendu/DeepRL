@@ -2,7 +2,9 @@
 
 import numpy as np
 from collections import deque
+from src.continuous_control.config import TrainConfig, TestConfig
 from unityagents import UnityEnvironment
+from src.continuous_control.agent import DDPGAgent
 
 
 class ContinuousControl:
@@ -48,66 +50,111 @@ class ContinuousControl:
 
 
 class DDPG:
-    
-    @staticmethod
-    def train(env, agent, n_episodes=5000, max_t=2000):
+    def __init__(self, args, env_type, mode):
+        self.args = args
+        self.env_type = env_type
+        self.agent_id = 0
+        self.env = ContinuousControl(env_type=env_type, mode=mode)
+        
+    def train(self):
+        if self.env_type == 'single':
+            NUM_AGENTS = 1
+        elif self.env_type == 'multi':
+            NUM_AGENTS = 20
+        else:
+            raise ValueError('Only single and multi environment accepted')
+            
+        self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=self.agent_id)
+        
         all_scores = []
         scores_window = deque(maxlen=100)
-        NUM_AGENTS = 20
-        running_time_step = 1
+        running_timestep = 1
         
-        for i_episode in range(1, n_episodes + 1):
-            agent.reset()
-            states = env.reset()
+        for i_episode in range(1, self.args.NUM_EPISODES + 1):
+            # agent.reset()
+            states = self.env.reset()
             scores = np.zeros(NUM_AGENTS)  # NUM_AGENTS
-            for pp in range(max_t):
-                actions = agent.act(states)
-                next_states, rewards, dones, _ = env.step(actions)
+            for pp in range(self.args.NUM_TIMESTEPS):
+                actions = self.agent.act(states, action_value_range=(-1, 1), running_timestep=running_timestep)
+                next_states, rewards, dones, _ = self.env.step(actions)
                 
-                agent.step(states, actions, rewards, next_states, dones, i_episode, running_time_step)
+                self.agent.step(states, actions, rewards, next_states, dones, running_timestep)
                 
                 scores += rewards
                 states = next_states
-                running_time_step += 1
+                running_timestep += 1
             
             avg_score = np.mean(scores)
             scores_window.append(avg_score)
             all_scores.append(avg_score)
-            
-            agent.stats_dict['score'].append(avg_score)
-            agent.save_stats()
+
+            ########################
+            tag = 'common/avg_score'
+            value_dict = {'avg_score_100_episode': avg_score}
+            step = i_episode
+
+            self.agent.log(tag, value_dict, step)
             
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
             if i_episode % 100 == 0:
                 print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
-                agent.save_checkpoints(i_episode)
+                self.agent.save_checkpoints(i_episode)
             
             if np.mean(scores_window) >= 30.0:
                 print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(
                         i_episode - 100, np.mean(scores_window))
                 )
-                agent.save_checkpoints(i_episode)
+                self.agent.save_checkpoints(i_episode)
                 break
         
         return all_scores
 
+    # def test(self, agent, trials=3, steps=200):
+    #     NUM_AGENTS = 20
+    #     for i in range(trials):
+    #         scores = np.zeros(NUM_AGENTS)
+    #         print('Starting Testing ...')
+    #         state = self.env.reset()
+    #         for j in range(steps):
+    #             action = agent.act(state)
+    #             # env.render()
+    #             next_state, reward, done, _ = self.env.step(action)
+    #             state = next_state
+    #             # print(reward)
+    #             scores += reward
+    #             if reward != 0:
+    #                 print("Current Reward:", reward, "Total Reward:", scores)
+    #             if done:
+    #                 print('Done.')
+    #                 break
+    #     self.env.close()
 
-    @staticmethod
-    def test(env, agent, trials=3, steps=200):
-        NUM_AGENTS = 20
+    def test(self, trials=10, steps=200):
+        self.agent = DDPGAgent(self.args, self.env_type, mode='test', agent_id=self.agent_id)
+        self.agent.load_weights()
         for i in range(trials):
-            scores = np.zeros(NUM_AGENTS)
+            total_reward = np.zeros(self.args.NUM_AGENTS)
             print('Starting Testing ...')
-            state = env.reset()
+            state = self.env.reset()
             for j in range(steps):
-                action = agent.act(state)
-                # env.render()
-                state, reward, done, _ = env.step(action)
-                print(reward)
-                scores += reward
-                if reward != 0:
-                    print("Current Reward:", reward, "Total Reward:", scores)
-                if done:
+                action = self.agent.act(state, action_value_range=(-1, 1), running_timestep=j)
+                # print(action)
+                # self.env.render()
+                next_states, rewards, dones, _ = self.env.step(action)
+                total_reward += rewards
+        
+                if rewards != 0:
+                    print("Current Reward:", np.max(rewards), "Total Reward:", np.max(total_reward))
+                state = next_states
+                if any(dones):
                     print('Done.')
                     break
-        env.close()
+      
+    
+mode = 'test'
+if mode == 'train':
+    obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
+    obj_.train()
+else :
+    obj_ = DDPG(args=TestConfig, env_type='multi', mode='test')
+    obj_.test()
