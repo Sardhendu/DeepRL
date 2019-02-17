@@ -56,16 +56,14 @@ class DDPG:
         self.agent_id = 0
         self.env = ContinuousControl(env_type=env_type, mode=mode)
         
-    def train(self):
-        if self.env_type == 'single':
-            NUM_AGENTS = 1
-        elif self.env_type == 'multi':
-            NUM_AGENTS = 20
+        if mode == 'train':
+            self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=self.agent_id)
+        elif mode == 'test':
+            self.agent = DDPGAgent(self.args, self.env_type, mode='test', agent_id=self.agent_id)
         else:
-            raise ValueError('Only single and multi environment accepted')
-            
-        self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=self.agent_id)
+            raise ValueError('Only "train", "test" mode excepted')
         
+    def train(self):
         all_scores = []
         scores_window = deque(maxlen=100)
         running_timestep = 1
@@ -73,7 +71,7 @@ class DDPG:
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             # agent.reset()
             states = self.env.reset()
-            scores = np.zeros(NUM_AGENTS)  # NUM_AGENTS
+            scores = np.zeros(self.args.NUM_AGENTS)  # NUM_AGENTS
             for pp in range(self.args.NUM_TIMESTEPS):
                 actions = self.agent.act(states, action_value_range=(-1, 1), running_timestep=running_timestep)
                 next_states, rewards, dones, _ = self.env.step(actions)
@@ -130,7 +128,6 @@ class DDPG:
     #     self.env.close()
 
     def test(self, trials=10, steps=200):
-        self.agent = DDPGAgent(self.args, self.env_type, mode='test', agent_id=self.agent_id)
         self.agent.load_weights()
         for i in range(trials):
             total_reward = np.zeros(self.args.NUM_AGENTS)

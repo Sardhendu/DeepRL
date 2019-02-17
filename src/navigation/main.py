@@ -4,11 +4,11 @@ import numpy as np
 import torch
 from unityagents import UnityEnvironment
 
-from src.navigation.agent import DDQNAgent, DDQNAgentPER
+from src.navigation.agent import DDQNAgent
 
 
-class CollectBanana:
-    def __init__(self, args, env_type='vector', mode='train'):
+class CollectBananaENV:
+    def __init__(self, env_type='vector', mode='train'):
         """
         This is a wrapper on top of the brain environment that provides useful function to render the environment
         call very similar to like calling the open AI gym environement.
@@ -19,11 +19,10 @@ class CollectBanana:
         """
         self.env_type = env_type
         if env_type == 'vector':
-            print('adasdasd ', args.BANANA_VECTOR_ENV_PATH)
-            self.base_env = UnityEnvironment(args.BANANA_VECTOR_ENV_PATH)
+            self.base_env = UnityEnvironment('Banana.app')
 
         elif env_type == 'visual':
-            self.base_env = UnityEnvironment(args.BANANA_VISUAL_ENV_PATH)
+            self.base_env = UnityEnvironment('VisualBanana.app')
         else:
             raise ValueError('Env Name not understood ....')
         # get the default brain
@@ -104,73 +103,73 @@ class CollectBanana:
         self.base_env.close()
 
 
-class DDQN:
-    def __init__(self, args, env, env_type='vector', buffer_type='ER'):
+class CollectBanana:
+    def __init__(self, args, env_type, mode, buffer_type='ER'):
         """
         
         :param args:            Config class
         :param env:             environment (Unity)
         :param env_type:        (str) Vector or Visual
+        :param mode:            (str) train or test
         :param buffer_type:     (str) ER (experience replay buffer), PER (Priority Experience Replay buffer)
         
         """
-        
+        self.agent_id = 0
         if buffer_type == 'ER':
-            self.agent = DDQNAgent(args, env_type, seed=0)
-        elif buffer_type == 'PER':
-            self.agent = DDQNAgentPER(args, env_type, seed=0)
+            self.agent = DDQNAgent(args, env_type, mode=mode)
+        # elif buffer_type == 'PER':
+        #     self.agent = DDQNAgentPER(args, env_type, seed=0)
             
-        self.env = env
+        self.env = CollectBananaENV(env_type='vector', mode='train')
         self.args = args
         self.score_window_size = 100
     
-    def train(self, target_score=13.0, verbose=1):
-        """Deep Q-Learning.
-            Params
-            ======
-                n_episodes (int): maximum number of training episodes
-                max_t (int): maximum number of timesteps per episode
-                eps_start (float): starting value of epsilon, for epsilon-greedy action selection
-                eps_end (float): minimum value of epsilon
-                eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
+    def train(self, target_score=13.0):
+        """
+        :param target_score:    (float) target score to solve the environment
+        :return:
         """
         scores = []  # list containing scores from each episode
         scores_window = deque(maxlen=self.score_window_size)  # last score_window_size scores
-        eps = self.args.EPSILON  # initialize epsilon
-        
-        running_time_step = 0
+        running_timestep = 0
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             state = self.env.reset()
             score = 0
             for t in range(self.args.NUM_TIMESTEPS):
-                action = self.agent.act(state, eps)
+                action = self.agent.act(state, running_timestep)
                 next_state, reward, done, _ = self.env.step(action)
                 # print('[Train]: ', next_state.shape, reward, done)
-                self.agent.step(state, action, reward, next_state, done, i_episode, running_time_step)
+                self.agent.step(state, action, reward, next_state, done, running_timestep)
                 state = next_state
                 score += reward
-                running_time_step += 1
+                running_timestep += 1
                 
                 if done:
                     break
-            
+
+            self.agent.reset()
             scores_window.append(score)  # save most recent score
             scores.append(score)  # save most recent score
-            eps = max(self.args.EPSILON_MIN, self.args.EPSILON_DECAY * eps)  # decrease epsilon
             avg_score = np.mean(scores_window)
-            
-            if avg_score >= target_score and i_episode > 100:
-                if verbose:
-                    print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(i_episode,
-                                                                                                 np.mean(
-                                                                                                         scores_window)))
-                torch.save(self.agent.local_network.state_dict(), self.args.CHECKPOINT_PATH)
+
+            ########################
+            tag = 'common/avg_score'
+            value_dict = {'avg_score_100_episode': avg_score}
+            step = i_episode
+
+            self.agent.log(tag, value_dict, step)
+
+            print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
+            if i_episode % 100 == 0:
+                print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
+                self.agent.checkpoint(i_episode)
+
+            if np.mean(scores_window) >= target_score:
+                print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(
+                        i_episode, np.mean(scores_window))
+                )
+                self.agent.checkpoint(i_episode)
                 break
-            
-            if verbose:
-                print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
-                if i_episode % 100 == 0:
-                    print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
         
         # torch.save(self.agent.local_network.state_dict(), self.saved_network)
         self.env.close()
@@ -197,4 +196,11 @@ class DDQN:
         self.env.close()
 
 
-# CollectBanana(env_type='vector', mode='train')
+mode = 'train'
+env_type = 'vector'
+if mode == 'train':
+    if env_type == 'vector':
+        from src.navigation.config import TrainVectorConfig
+        args = TrainVectorConfig
+        obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
+        obj_cb.train()

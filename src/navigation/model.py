@@ -20,27 +20,25 @@ class QNetwork(nn.Module):
         '''
         
         super(QNetwork, self).__init__()
-        
+        self.seed = torch.manual_seed(seed)
         self.network_name = network_name
         print('[INIT] Initializing Network (%s) .... .... ....'%str(network_name))
         
         if network_name == 'net1':
-            self.net1(state_size, action_size, seed)
+            self.net1(state_size, action_size)
             self.forward_func = self.forward_net1
         elif network_name == 'net2':
-            self.net2(state_size, action_size, seed)
+            self.net2(state_size, action_size)
             self.forward_func = self.forward_net2
         else:
             raise ValueError('Network Name not Understood')
         
-    def net1(self, state_size, action_size, seed):
-        self.seed = torch.manual_seed(seed)
+    def net1(self, state_size, action_size):
         self.fc1 = nn.Linear(state_size, 64)
         self.fc2 = nn.Linear(64, 64)
         self.fc3 = nn.Linear(64, action_size)
         
-    def net2(self, state_size, action_size, seed):
-        self.seed = torch.manual_seed(seed)
+    def net2(self, state_size, action_size):
         self.fc1 = nn.Linear(state_size, 64)
         self.fc2 = nn.Linear(64, 64)
         self.fc3 = nn.Linear(64, 64)

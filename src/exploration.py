@@ -57,7 +57,6 @@ class OUNoise:
     
     def reset(self):
         """Reset the internal state (= noise) to mean (mu)."""
-        # print ('237189237891738937972987jcjshdgchjdgchjdghcjgdcghjdgjhhgjhgj')
         self.state = copy.copy(self.mu)
     
     def sample(self):
@@ -69,7 +68,27 @@ class OUNoise:
 
 
 class EpsilonGreedy:
-    pass
+    def __init__(self, epsilon_init, epsilon_min, decay_value, seed):
+        """
+        :param epsilon_init:    (float) -> (0, 1) where 1: full exploration, 0: full exploitation:
+                                 Initial value of epsilon
+        :param epsilon_min:     (float) -> (0, 1) The minimum value of epsilon after which there is no decay
+        :param decay_value:     (float)  How much to decay after every timestep
+        :param seed:            Just some seed value for future use
+        """
+        np.random.seed(seed)
+        self.epsilon_init = epsilon_init
+        self.epsilon_min = epsilon_min
+        self.decay_value = decay_value
+        
+        self.reset()
+        
+    def reset(self):
+        self.epsilon = self.epsilon_init
+        
+    def sample(self):
+        self.epsilon *= self.decay_value
+        return max(self.epsilon, self.epsilon_min)
 
 
     

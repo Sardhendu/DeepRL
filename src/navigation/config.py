@@ -5,6 +5,7 @@ import torch
 from src import utils
 from src.logger import Logger
 from src.navigation import model
+from src.exploration import EpsilonGreedy
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -16,6 +17,8 @@ class TrainVectorConfig:
     NUM_AGENTS = 1
     BUFFER_SIZE = 10000
     BATCH_SIZE = 64
+    NUM_EPISODES = 2000
+    NUM_TIMESTEPS = 1000
     
     # Agent Params
     TAU = 1e-2
@@ -33,7 +36,7 @@ class TrainVectorConfig:
     
     # Exploration parameter (Since this is a discrete task we have to use a discrete policy exploration 1.e epsilon
     # greedy)
-    # TODO: Write a function for epsilon greedy policy and call it here
+    EPSILON_GREEDY = lambda: EpsilonGreedy(epsilon_init=1, epsilon_min=0.01, decay_value=0.995, seed=0)
 
     # NETWORK PARAMETERS
     Q_LEARNING_TYPE = 'dqn'  # available values = {'dqn', 'dbl_dqn'}
