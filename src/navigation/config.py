@@ -9,45 +9,48 @@ from src.exploration import EpsilonGreedy
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
 class TrainVectorConfig:
     # Environment Parameters
     SEED = 0
     STATE_SIZE = 37
     ACTION_SIZE = 4
     NUM_AGENTS = 1
-    BUFFER_SIZE = 10000
+    BUFFER_SIZE = 10000  # int(1e05)
     BATCH_SIZE = 64
     NUM_EPISODES = 2000
     NUM_TIMESTEPS = 1000
     
     # Agent Params
-    TAU = 1e-2
+    TAU = 0.001
     WEIGHT_DECAY = 0.0
     IS_HARD_UPDATE = False
     IS_SOFT_UPDATE = True
-    SOFT_UPDATE_FREQUENCY = 2
+    SOFT_UPDATE_FREQUENCY = 4
     HARD_UPDATE_FREQUENCY = 2000
     
     # Model parameters
-    AGENT_LEARNING_RATE = 1e-3
-    DATA_TO_BUFFER_BEFORE_LEARNING = 256
+    AGENT_LEARNING_RATE = 0.0005
+    DATA_TO_BUFFER_BEFORE_LEARNING = 64
     GAMMA = 0.99
-    LEARNING_FREQUENCY = 2
+    LEARNING_FREQUENCY = 4
     
     # Exploration parameter (Since this is a discrete task we have to use a discrete policy exploration 1.e epsilon
     # greedy)
-    EPSILON_GREEDY = lambda: EpsilonGreedy(epsilon_init=1, epsilon_min=0.01, decay_value=0.995, seed=0)
-
+    EPSILON_GREEDY = lambda: EpsilonGreedy(
+            epsilon_init=1, epsilon_min=0.01, decay_value=0.995, decay_after_step=300, seed=0
+    )  # Note decay_after_steps should approximately be equal to the num_timesteps in one episode
+    
     # NETWORK PARAMETERS
     Q_LEARNING_TYPE = 'dqn'  # available values = {'dqn', 'dbl_dqn'}
     LOCAL_NETWORK = lambda: model.QNetwork(
             TrainVectorConfig.STATE_SIZE, TrainVectorConfig.ACTION_SIZE, TrainVectorConfig.SEED, network_name='net2'
     ).to(device)
-    TARGET_NETWORK= lambda: model.QNetwork(
-            TrainVectorConfig.STATE_SIZE, TrainVectorConfig.ACTION_SIZE, TrainVectorConfig.SEED,  network_name='net2'
+    TARGET_NETWORK = lambda: model.QNetwork(
+            TrainVectorConfig.STATE_SIZE, TrainVectorConfig.ACTION_SIZE, TrainVectorConfig.SEED, network_name='net2'
     ).to(device)
     OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=TrainVectorConfig.AGENT_LEARNING_RATE)
-    
+
     # LOG PATHS
     MODEL_NAME = 'model_1'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
@@ -73,9 +76,6 @@ class TrainVectorConfig:
     
     if SOFT_UPDATE_FREQUENCY < LEARNING_FREQUENCY or HARD_UPDATE_FREQUENCY < LEARNING_FREQUENCY:
         raise ValueError('Soft update frequency can not be smaller than the learning frequency')
-    
-    
-    
     
     # elif env_type == 'visual':
     #     self.local_network = model.VisualQNEtwork(args.STATE_SIZE, args.ACTION_SIZE, seed,

@@ -20,7 +20,7 @@ class MemoryER:
             seed (int): random seed
         """
         print('[INIT] Initializing Experience Replay Buffer .... .... ....')
-
+        
         random.seed(seed)
         self.memory = deque(maxlen=buffer_size)  # FIFO
         self.batch_size = batch_size
@@ -44,20 +44,18 @@ class MemoryER:
             actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
         else:
             raise ValueError('Only float and double type accepted for actions')
-            
+        
         rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
-        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(
+            device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(
+            device)
         
         return (states, actions, rewards, next_states, dones)
     
     def __len__(self):
         """Return the current size of internal memory."""
         return len(self.memory)
-
-
-
-
 
 
 class SumTree(object):

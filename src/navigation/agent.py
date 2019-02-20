@@ -137,9 +137,6 @@ class RLAgent:
     def act(self, state, running_timestep):
         pass
     
-    def reset(self):
-        self.EPSILON_GREEDY.reset()
-    
     def log(self, tag, value_dict, step):
         self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)
         

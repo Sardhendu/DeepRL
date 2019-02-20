@@ -12,15 +12,15 @@ class CollectBananaENV:
         """
         This is a wrapper on top of the brain environment that provides useful function to render the environment
         call very similar to like calling the open AI gym environement.
-        
+
         Wrapper Code referred from : https://github.com/yingweiy/drlnd_project1_navigation
-        
+
         :param env_type:
         """
         self.env_type = env_type
         if env_type == 'vector':
             self.base_env = UnityEnvironment('Banana.app')
-
+        
         elif env_type == 'visual':
             self.base_env = UnityEnvironment('VisualBanana.app')
         else:
@@ -34,19 +34,19 @@ class CollectBananaENV:
             self.train = True
         else:
             self.train = False
-            
+        
         self.frame1 = None
         self.frame2 = None
         self.frame3 = None
         self.reset()
-
+        
         if env_type == 'vector':
             self.state_size = len(self.state)
         elif env_type == 'visual':
             self.state_size = self.state.shape
         else:
             raise ValueError('Environment type not understood ....')
-            
+        
         print(self.state_size)
     
     def get_state(self):
@@ -67,7 +67,7 @@ class CollectBananaENV:
                 self.state[0, :, 2, :, :] = self.frame2
             if self.frame3 is not None:
                 self.state[0, :, 3, :, :] = self.frame3
-                
+            
             # Keep the last 3 frames in the memory to be accessed or stacked with the new input frame to supply as
             # input to the convolution network
             self.frame3 = self.frame2
@@ -78,10 +78,10 @@ class CollectBananaENV:
             # unsqueeze the array
         elif self.env_type == 'vector':
             self.state = self.env_info.vector_observations[0]
-            
-        else:
-            raise ValueError('Environment name %s not understood.'%str(self.env_type))
         
+        else:
+            raise ValueError('Environment name %s not understood.' % str(self.env_type))
+    
     def reset(self):
         self.env_info = self.base_env.reset(train_mode=self.train)[self.brain_name]
         self.get_state()
@@ -106,20 +106,20 @@ class CollectBananaENV:
 class CollectBanana:
     def __init__(self, args, env_type, mode, buffer_type='ER'):
         """
-        
+
         :param args:            Config class
         :param env:             environment (Unity)
         :param env_type:        (str) Vector or Visual
         :param mode:            (str) train or test
         :param buffer_type:     (str) ER (experience replay buffer), PER (Priority Experience Replay buffer)
-        
+
         """
         self.agent_id = 0
         if buffer_type == 'ER':
             self.agent = DDQNAgent(args, env_type, mode=mode)
         # elif buffer_type == 'PER':
         #     self.agent = DDQNAgentPER(args, env_type, seed=0)
-            
+        
         self.env = CollectBananaENV(env_type='vector', mode='train')
         self.args = args
         self.score_window_size = 100
@@ -131,7 +131,7 @@ class CollectBanana:
         """
         scores = []  # list containing scores from each episode
         scores_window = deque(maxlen=self.score_window_size)  # last score_window_size scores
-        running_timestep = 0
+        running_timestep = 1
         for i_episode in range(1, self.args.NUM_EPISODES + 1):
             state = self.env.reset()
             score = 0
@@ -146,24 +146,23 @@ class CollectBanana:
                 
                 if done:
                     break
-
-            self.agent.reset()
+            
             scores_window.append(score)  # save most recent score
             scores.append(score)  # save most recent score
             avg_score = np.mean(scores_window)
-
+            
             ########################
             tag = 'common/avg_score'
             value_dict = {'avg_score_100_episode': avg_score}
             step = i_episode
-
+            
             self.agent.log(tag, value_dict, step)
-
+            
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
             if i_episode % 100 == 0:
                 print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
                 self.agent.checkpoint(i_episode)
-
+            
             if np.mean(scores_window) >= target_score:
                 print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(
                         i_episode, np.mean(scores_window))
@@ -175,10 +174,10 @@ class CollectBanana:
         self.env.close()
         
         return scores
-
+    
     def test(self, trials=3, steps=200):
         self.agent.local_network.load_state_dict(torch.load(self.args.CHECKPOINT_PATH))
-    
+        
         for i in range(trials):
             total_reward = 0
             print('Starting Testing ...')
@@ -201,6 +200,7 @@ env_type = 'vector'
 if mode == 'train':
     if env_type == 'vector':
         from src.navigation.config import TrainVectorConfig
+        
         args = TrainVectorConfig
         obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
         obj_cb.train()
