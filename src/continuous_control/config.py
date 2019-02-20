@@ -69,7 +69,7 @@ class TrainConfig:
     MODEL_NAME = 'model_5'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'
-    base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))
+    base_dir = os.path.join(model_dir, 'continuous_control', '%s' % MODEL_NAME)
 
     if not os.path.exists(base_dir):
         print('creating .... ', base_dir)

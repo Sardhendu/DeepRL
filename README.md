@@ -93,12 +93,13 @@ Train two agents to play ping pong. And, the goal of each agent is to keep the b
 ### TODO:
 1. Modular code for each environment.
 2. Dueling Network Architectures with DQN
-3. Lambda return (n-step bootstrap)
-4. Actor-Critic
-5. Crawler for Continuous Control
-6. Add Tensorflow graphs instead of manual dictionary graphs for all environments.
-7. Continuous control Test phase.
-8. Parallel Environments and how efficient hte weight sharing is
+3. Lambda return for REINFORCE (n-step bootstrap)
+4. Apply prioritized experience replay to all the environment and compare while maintaining the modularity of the code.
+5. Actor-Critic
+6. Crawler for Continuous Control
+7. Add Tensorflow graphs instead of manual dictionary graphs for all environments.
+8. Continuous control Test phase.
+9. Parallel Environments and how efficient hte weight sharing is
 
  
 
