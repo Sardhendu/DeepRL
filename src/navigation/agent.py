@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from src.buffer import MemoryER, MemoryPER
 from src.navigation import model
 
-from src import commons as cmn
+from src import common as cmn
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

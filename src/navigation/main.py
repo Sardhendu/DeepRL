@@ -19,11 +19,10 @@ class CollectBanana:
         """
         self.env_type = env_type
         if env_type == 'vector':
-            print('adasdasd ', args.BANANA_VECTOR_ENV_PATH)
-            self.base_env = UnityEnvironment(args.BANANA_VECTOR_ENV_PATH)
+            self.base_env = UnityEnvironment('Banana.app')
 
         elif env_type == 'visual':
-            self.base_env = UnityEnvironment(args.BANANA_VISUAL_ENV_PATH)
+            self.base_env = UnityEnvironment('VisualBanana.app')
         else:
             raise ValueError('Env Name not understood ....')
         # get the default brain
