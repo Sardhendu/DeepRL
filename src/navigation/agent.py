@@ -55,6 +55,8 @@ class RLAgent:
             
         else:
             print('[Agent] Loading Agent weights')
+            # Exploration Parameter
+            self.EPSILON_GREEDY = args.EPSILON_GREEDY()
             self.local_network = args.LOCAL_NETWORK()
             self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
             self.CHECKPOINT_NUMBER = args.CHECKPOINT_NUMBER
@@ -160,9 +162,10 @@ class DDQNAgent(RLAgent):
         :param mode:            str ("train", "test")
         """
         # 1. Create the Replay-Memory-Buffer
-        self.memory = MemoryER(
-                buffer_size=args.BUFFER_SIZE, batch_size=args.BATCH_SIZE, seed=args.SEED, action_dtype='long'
-        )
+        if mode == 'train':
+            self.memory = MemoryER(
+                    buffer_size=args.BUFFER_SIZE, batch_size=args.BATCH_SIZE, seed=args.SEED, action_dtype='long'
+            )
         super().__init__(args, env_type, mode)
 
     def act(self, state, running_timestep):

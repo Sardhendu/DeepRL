@@ -52,7 +52,7 @@ class TrainVectorConfig:
     OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=TrainVectorConfig.AGENT_LEARNING_RATE)
 
     # LOG PATHS
-    MODEL_NAME = 'model_1'
+    MODEL_NAME = 'model_2'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'
     base_dir = os.path.join(model_dir, 'navigation', '%s' % (MODEL_NAME))
@@ -84,3 +84,33 @@ class TrainVectorConfig:
     #                                                network_name=args.NET_NAME).to(device)
     # else:
     #     raise ValueError('Env type not understood')
+
+class TestVectorConfig:
+    # Environment Parameters
+    SEED = 0
+    STATE_SIZE = 33
+    ACTION_SIZE = 4
+    NUM_AGENTS = 20
+
+    # Exploration parameter
+    EPSILON_GREEDY = lambda: EpsilonGreedy(
+            epsilon_init=0, epsilon_min=0, decay_value=0, decay_after_step=1, seed=0
+    )
+
+    Q_LEARNING_TYPE = 'dqn'  # available values = {'dqn', 'dbl_dqn'}
+    LOCAL_NETWORK = lambda: model.QNetwork(
+            TrainVectorConfig.STATE_SIZE, TrainVectorConfig.ACTION_SIZE, TrainVectorConfig.SEED, network_name='net2'
+    ).to(device)
+
+    # LOG PATHS
+    MODEL_NAME = 'model_1'
+    CHECKPOINT_NUMBER = '436'
+    pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
+    model_dir = pth + '/models'
+    base_dir = os.path.join(model_dir, 'navigation', '%s' % (MODEL_NAME))
+
+    if not os.path.exists(base_dir):
+        print('creating .... ', base_dir)
+        os.makedirs(base_dir)
+
+    CHECKPOINT_DIR = base_dir

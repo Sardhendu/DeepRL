@@ -107,26 +107,6 @@ class DDPG:
         
         return all_scores
 
-    # def test(self, agent, trials=3, steps=200):
-    #     NUM_AGENTS = 20
-    #     for i in range(trials):
-    #         scores = np.zeros(NUM_AGENTS)
-    #         print('Starting Testing ...')
-    #         state = self.env.reset()
-    #         for j in range(steps):
-    #             action = agent.act(state)
-    #             # env.render()
-    #             next_state, reward, done, _ = self.env.step(action)
-    #             state = next_state
-    #             # print(reward)
-    #             scores += reward
-    #             if reward != 0:
-    #                 print("Current Reward:", reward, "Total Reward:", scores)
-    #             if done:
-    #                 print('Done.')
-    #                 break
-    #     self.env.close()
-
     def test(self, trials=10, steps=200):
         self.agent.load_weights()
         for i in range(trials):
@@ -135,8 +115,6 @@ class DDPG:
             state = self.env.reset()
             for j in range(steps):
                 action = self.agent.act(state, action_value_range=(-1, 1), running_timestep=j)
-                # print(action)
-                # self.env.render()
                 next_states, rewards, dones, _ = self.env.step(action)
                 total_reward += rewards
         

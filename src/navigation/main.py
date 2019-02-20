@@ -118,7 +118,7 @@ class CollectBanana:
         # elif buffer_type == 'PER':
         #     self.agent = DDQNAgentPER(args, env_type, seed=0)
         
-        self.env = CollectBananaENV(env_type='vector', mode='train')
+        self.env = CollectBananaENV(env_type='vector', mode=mode)
         self.args = args
         self.score_window_size = 100
     
@@ -174,31 +174,36 @@ class CollectBanana:
         return scores
     
     def test(self, trials=3, steps=200):
-        self.agent.local_network.load_state_dict(torch.load(self.args.CHECKPOINT_PATH))
-        
+        self.agent.load_weights()
         for i in range(trials):
-            total_reward = 0
+            total_rewards = 0
             print('Starting Testing ...')
             state = self.env.reset()
             for j in range(steps):
-                action = self.agent.act(state)
-                self.env.render()
-                state, reward, done, _ = self.env.step(action)
-                total_reward += reward
-                if reward != 0:
-                    print("Current Reward:", reward, "Total Reward:", total_reward)
-                if done:
+                action = self.agent.act(state, running_timestep=j)
+                # self.env.render()
+                next_states, rewards, dones, _ = self.env.step(action)
+                total_rewards += rewards
+                if rewards != 0:
+                    print("Current Reward:", rewards, "Total Reward:", total_rewards)
+                state = next_states
+                if dones:
                     print('Done.')
                     break
         self.env.close()
 
 
-mode = 'train'
+mode = 'test'
 env_type = 'vector'
 if mode == 'train':
     if env_type == 'vector':
         from src.navigation.config import TrainVectorConfig
-        
         args = TrainVectorConfig
         obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
         obj_cb.train()
+elif mode == 'test':
+    if env_type == 'vector':
+        from src.navigation.config import TestVectorConfig
+        args = TestVectorConfig
+        obj_cb = CollectBanana(args, env_type='vector', mode='test', buffer_type='ER')
+        obj_cb.test()
