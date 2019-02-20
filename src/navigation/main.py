@@ -106,7 +106,6 @@ class CollectBananaENV:
 class CollectBanana:
     def __init__(self, args, env_type, mode, buffer_type='ER'):
         """
-
         :param args:            Config class
         :param env:             environment (Unity)
         :param env_type:        (str) Vector or Visual

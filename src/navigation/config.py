@@ -38,7 +38,7 @@ class TrainVectorConfig:
     # Exploration parameter (Since this is a discrete task we have to use a discrete policy exploration 1.e epsilon
     # greedy)
     EPSILON_GREEDY = lambda: EpsilonGreedy(
-            epsilon_init=1, epsilon_min=0.01, decay_value=0.995, decay_after_step=300, seed=0
+            epsilon_init=1, epsilon_min=0.01, decay_value=0.99, decay_after_step=300, seed=0
     )  # Note decay_after_steps should approximately be equal to the num_timesteps in one episode
     
     # NETWORK PARAMETERS

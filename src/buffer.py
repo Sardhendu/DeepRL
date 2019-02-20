@@ -37,7 +37,6 @@ class MemoryER:
         experiences = random.sample(self.memory, k=self.batch_size)
         
         states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
-        
         if self.action_dtype == 'long':
             actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)
         elif self.action_dtype == 'float':
