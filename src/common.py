@@ -66,18 +66,18 @@ def Plot():
     
     return stats_plot
 
-
-
-
-def debug():
-    TAU = 0.1
-    decay_rate = 0.003
-    TAU_MIN = 0.01
-    a_ = []
-    for i in range(0, 2000):
-        a = exp_decay(TAU, decay_rate, i, TAU_MIN)
-        a_.append(a)
-    
-    import matplotlib.pyplot as plt
-    plt.plot(a_)
-    plt.show()
+#
+#
+#
+# def debug():
+#     TAU = 0.1
+#     decay_rate = 0.003
+#     TAU_MIN = 0.01
+#     a_ = []
+#     for i in range(0, 2000):
+#         a = exp_decay(TAU, decay_rate, i, TAU_MIN)
+#         a_.append(a)
+#
+#     import matplotlib.pyplot as plt
+#     plt.plot(a_)
+#     plt.show()

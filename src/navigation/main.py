@@ -20,7 +20,6 @@ class CollectBananaENV:
         self.env_type = env_type
         if env_type == 'vector':
             self.base_env = UnityEnvironment('Banana.app')
-        
         elif env_type == 'visual':
             self.base_env = UnityEnvironment('VisualBanana.app')
         else:

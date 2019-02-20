@@ -11,7 +11,6 @@ class MemoryER:
     
     def __init__(self, buffer_size, batch_size, seed, action_dtype='long'):
         """Initialize a ReplayBuffer object.
-
         Params
         ======
             action_size (int): dimension of each action
