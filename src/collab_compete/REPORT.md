@@ -162,7 +162,7 @@ Vector Environment:
             Episode 1200	Average Score: 0.215
             Episode 1400	Average Score: 0.294
             Episode 1490	Average Score: 0.610
-     ```   
+   ```   
     
    Episodic Scores:   
             

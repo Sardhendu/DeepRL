@@ -1,12 +1,8 @@
 import os
-import random
-from collections import defaultdict
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from src.buffer import MemoryER, MemoryPER
-from src.navigation import model
 from src import utils
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

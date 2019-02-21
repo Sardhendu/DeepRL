@@ -126,6 +126,20 @@ In DQN, the network outputs an action-value function Q(s, a) for a discrete acti
    ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/continuous_control/images/score.png)
    
    
+Findings:
+* ```python
+   NOISE_AMPLITUDE_DECAY_FN = lambda: utils.Decay(
+            decay_type='multiplicative',
+            alpha=1, decay_rate=0.995, min_value=0.25,
+            start_decay_after_step=1000,
+            decay_after_every_step=300,
+            decay_to_zero_after_step=30000   # When to stop using Noise
+    )
+   ```
+The above configuration was productive in the begining. The agent learned to get to the score of 19 in just 300 episodes. But then the score started to decay. A part of the problem could be that the noise parameter looses its significance in just ~200 episodes and the agent may be suffering form high exploitation. 
+
+* 
+
 Ideas for future improvement:
 -----
 * Experiment with different Network architectures.

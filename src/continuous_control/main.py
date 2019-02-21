@@ -88,7 +88,7 @@ class DDPG:
 
             ########################
             tag = 'common/avg_score'
-            value_dict = {'avg_score_100_episode': avg_score}
+            value_dict = {'avg_score_100_episode': np.mean(scores_window)}
             step = i_episode
 
             self.agent.log(tag, value_dict, step)
@@ -107,7 +107,7 @@ class DDPG:
         
         return all_scores
 
-    def test(self, trials=10, steps=200):
+    def test(self, trials=5, steps=200):
         self.agent.load_weights()
         for i in range(trials):
             total_reward = np.zeros(self.args.NUM_AGENTS)
@@ -124,12 +124,14 @@ class DDPG:
                 if any(dones):
                     print('Done.')
                     break
-      
-    
-mode = 'test'
-if mode == 'train':
-    obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
-    obj_.train()
-else :
-    obj_ = DDPG(args=TestConfig, env_type='multi', mode='test')
-    obj_.test()
+
+
+
+if __name__ == "__main__":
+    mode = 'train'
+    if mode == 'train':
+        obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
+        obj_.train()
+    else :
+        obj_ = DDPG(args=TestConfig, env_type='multi', mode='test')
+        obj_.test()

@@ -136,11 +136,11 @@ class CollabCompete:
         self.env.close()
 
 
-
-train=False
-if train:
-    CollabCompete(args=TrainConfig, mode='train').train()
-else:
-    CollabCompete(args=TestConfig, mode='test').test()
+if __name__ == "__main__":
+    train = False
+    if train:
+        CollabCompete(args=TrainConfig, mode='train').train()
+    else:
+        CollabCompete(args=TestConfig, mode='test').test()
 
 

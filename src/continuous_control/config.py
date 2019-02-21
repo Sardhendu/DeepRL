@@ -15,14 +15,15 @@ class TrainConfig:
     # ENVIRONMEMT PARAMETER
     STATE_SIZE = 33
     ACTION_SIZE = 4
+    NUM_AGENTS = 20
     NUM_EPISODES = 2000
     NUM_TIMESTEPS = 1000
     
     # MODEL PARAMETERS
     SEED = 0
     BUFFER_SIZE = int(1e05)
-    BATCH_SIZE = 512
-    DATA_TO_BUFFER_BEFORE_LEARNING = 512
+    BATCH_SIZE = 256
+    DATA_TO_BUFFER_BEFORE_LEARNING = 256
     
     # LEARNING PARAMETERS
     ACTOR_LEARNING_RATE = 0.0001
@@ -45,18 +46,18 @@ class TrainConfig:
     NOISE_FN = lambda: OUNoise(size=4, seed=0)  # (ACTION_SIZE, SEED_VAL)
     NOISE_AMPLITUDE_DECAY_FN = lambda: utils.Decay(
             decay_type='multiplicative',
-            alpha=1, decay_rate=1, min_value=0.25,
-            start_decay_after_step=15000,
-            decay_after_every_step=100,
+            alpha=1, decay_rate=0.995, min_value=0.25,
+            start_decay_after_step=1000,
+            decay_after_every_step=300,
             decay_to_zero_after_step=30000   # When to stop using Noise
     )
     
     
     # MODELS
     ACTOR_NETWORK_FN = lambda: Actor(
-            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=256, fc2_units=256).to(device)
     CRITIC_NETWORK_FN = lambda: Critic(
-            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=256, fc2_units=256).to(device)
     
     # Optimization
     ACTOR_OPTIMIZER_FN = lambda params: torch.optim.Adam(params, lr=TrainConfig.ACTOR_LEARNING_RATE)
@@ -66,7 +67,7 @@ class TrainConfig:
     MEMORY_FN = lambda: MemoryER(TrainConfig.BUFFER_SIZE, TrainConfig.BATCH_SIZE, seed=2, action_dtype='float')
     
     # LOG PATHS
-    MODEL_NAME = 'model_5'
+    MODEL_NAME = 'model_6'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'
     base_dir = os.path.join(model_dir, 'continuous_control', '%s' % MODEL_NAME)
@@ -109,7 +110,7 @@ class TestConfig:
             TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
 
     # LOG PATHS
-    MODEL_NAME = 'model_5'
+    MODEL_NAME = 'model_6'
     CHECKPOINT_NUMBER = '1190'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'

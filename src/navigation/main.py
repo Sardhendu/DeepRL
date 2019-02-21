@@ -118,7 +118,7 @@ class CollectBanana:
         # elif buffer_type == 'PER':
         #     self.agent = DDQNAgentPER(args, env_type, seed=0)
         
-        self.env = CollectBananaENV(env_type='vector', mode=mode)
+        self.env = CollectBananaENV(env_type=env_type, mode=mode)
         self.args = args
         self.score_window_size = 100
     
@@ -193,17 +193,20 @@ class CollectBanana:
         self.env.close()
 
 
-mode = 'test'
-env_type = 'vector'
-if mode == 'train':
-    if env_type == 'vector':
-        from src.navigation.config import TrainVectorConfig
-        args = TrainVectorConfig
-        obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
-        obj_cb.train()
-elif mode == 'test':
-    if env_type == 'vector':
-        from src.navigation.config import TestVectorConfig
-        args = TestVectorConfig
-        obj_cb = CollectBanana(args, env_type='vector', mode='test', buffer_type='ER')
-        obj_cb.test()
+
+
+if __name__ =="__main__":
+    mode = 'test'
+    env_type = 'vector'
+    if mode == 'train':
+        if env_type == 'vector':
+            from src.navigation.config import TrainVectorConfig
+            args = TrainVectorConfig
+            obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
+            obj_cb.train()
+    elif mode == 'test':
+        if env_type == 'vector':
+            from src.navigation.config import TestVectorConfig
+            args = TestVectorConfig
+            obj_cb = CollectBanana(args, env_type='vector', mode='test', buffer_type='ER')
+            obj_cb.test()
