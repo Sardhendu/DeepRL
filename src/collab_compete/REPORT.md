@@ -162,11 +162,10 @@ Vector Environment:
             Episode 1200	Average Score: 0.215
             Episode 1400	Average Score: 0.294
             Episode 1490	Average Score: 0.610
-   ```   
+       ```   
     
-   Episodic Scores:   
-            
-   ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/scores.png)
+        Episodic Scores:   
+        ![alt text](https://github.com/Sardhendu/DeepRL/blob/master/src/collab_compete/images/scores.png)
    
    
    
