@@ -107,11 +107,11 @@ class TestConfig:
     NOISE_AMPLITUDE_DECAY_FN = None
     
     ACTOR_NETWORK_FN = lambda: Actor(
-            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=512, fc2_units=256).to(device)
+            TrainConfig.STATE_SIZE, TrainConfig.ACTION_SIZE, seed=2, fc1_units=256, fc2_units=256).to(device)
 
     # LOG PATHS
     MODEL_NAME = 'model_6'
-    CHECKPOINT_NUMBER = '1190'
+    CHECKPOINT_NUMBER = '1224'
     pth = os.path.abspath(os.path.join(os.getcwd(), '../..'))
     model_dir = pth + '/models'
     base_dir = os.path.join(model_dir, 'continuous_control', '%s' % (MODEL_NAME))

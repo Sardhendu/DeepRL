@@ -137,8 +137,8 @@ class CollabCompete:
 
 
 if __name__ == "__main__":
-    train = False
-    if train:
+    mode = 'test'
+    if mode == 'train':
         CollabCompete(args=TrainConfig, mode='train').train()
     else:
         CollabCompete(args=TestConfig, mode='test').test()

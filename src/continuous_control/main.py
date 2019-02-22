@@ -128,7 +128,7 @@ class DDPG:
 
 
 if __name__ == "__main__":
-    mode = 'train'
+    mode = 'test'
     if mode == 'train':
         obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
         obj_.train()

@@ -203,3 +203,20 @@ class Agent:
     #     action = self.RIGHTFIRE if np.random.random() < action_prob else self.LEFTFIRE
     #     return action
     
+
+
+
+# Episode 100	Average Score: 3.06
+# Episode 200	Average Score: 16.87
+# Episode 300	Average Score: 19.21
+# Episode 400	Average Score: 21.63
+# Episode 500	Average Score: 27.63
+# Episode 600	Average Score: 25.74
+# Episode 700	Average Score: 26.98
+# Episode 800	Average Score: 24.58
+# Episode 900	Average Score: 25.36
+# Episode 1000	Average Score: 21.93
+# Episode 1100	Average Score: 24.70
+# Episode 1200	Average Score: 26.42
+# Episode 1224	Average Score: 30.10
+# Environment solved in 1124 episodes!	Average Score: 30.10
