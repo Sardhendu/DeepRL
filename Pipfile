@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+pyyaml = "==4.2b4"
 torchvision = "*"
 progressbar = "*"
 unityagents = "*"
