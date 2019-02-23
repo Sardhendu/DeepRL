@@ -1,14 +1,20 @@
 # widget bar to display progress
+
+import matplotlib
+matplotlib.use('PS')                # This helps with teh matplotlib error on macosx. But note this has to be in the
+# top of every other matplotlib import
+
 import gym
-import matplotlib.pyplot as plt
 import numpy as np
 import progressbar as pb
 import torch
 from IPython.display import display
 from JSAnimation.IPython_display import display_animation
-from matplotlib import animation
 
-from src.pong_atari.agent import Agent
+from matplotlib import animation
+import matplotlib.pyplot as plt
+from src.pong_atari.config import TrainConfig
+from src.pong_atari.agent import ReinforceAgent
 from src.pong_atari.parallel_env import parallelEnv
 from src.pong_atari.utils import preprocess_batch
 
@@ -31,17 +37,17 @@ def animate_frames(frames):
     display(display_animation(fanim, default_mode='once'))
     
     
-class Reinforce:
-    def __init__(self, args, mode='train'):
+class PongAtariEnv:
+    def __init__(self, args, env_type='parallel', mode='train'):
         self.args = args
 
         if mode == 'train':
-            print ('[Train] In training mode ....')
+            print('[Train] In training mode ....')
             self.num_episodes = args.NUM_EPISODES
             self.horizon = args.HORIZON
             self.num_parallel_env = args.NUM_PARALLEL_ENV
             self.env = parallelEnv('PongDeterministic-v4', self.num_parallel_env, seed=12345)
-            self.agent = Agent(args, self.env)
+            self.agent = ReinforceAgent(args, self.env, env_type, mode, agent_id=0)
         else:
             print('[Train] In testing mode ....')
             self.env = gym.make('PongDeterministic-v4')
@@ -111,7 +117,8 @@ class Reinforce:
             
         
             
-        
+obj_pong = PongAtariEnv(TrainConfig, env_type='parallel', mode='train')
+obj_pong.train()
         
     
     

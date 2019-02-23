@@ -7,7 +7,7 @@ from unityagents import UnityEnvironment
 from src.continuous_control.agent import DDPGAgent
 
 
-class ContinuousControl:
+class ContinuousControlEnv:
     def __init__(self, env_type, mode='train'):
         if mode != 'train':
             print('[Mode] Setting to Test Mode')
@@ -49,12 +49,12 @@ class ContinuousControl:
 
 
 
-class DDPG:
+class ContinuousControl:
     def __init__(self, args, env_type, mode):
         self.args = args
         self.env_type = env_type
         self.agent_id = 0
-        self.env = ContinuousControl(env_type=env_type, mode=mode)
+        self.env = ContinuousControlEnv(env_type=env_type, mode=mode)
         
         if mode == 'train':
             self.agent = DDPGAgent(self.args, self.env_type, mode='train', agent_id=self.agent_id)
@@ -130,8 +130,8 @@ class DDPG:
 if __name__ == "__main__":
     mode = 'test'
     if mode == 'train':
-        obj_ = DDPG(args=TrainConfig, env_type='multi', mode='train')
+        obj_ = ContinuousControl(args=TrainConfig, env_type='multi', mode='train')
         obj_.train()
     else :
-        obj_ = DDPG(args=TestConfig, env_type='multi', mode='test')
+        obj_ = ContinuousControl(args=TestConfig, env_type='multi', mode='test')
         obj_.test()

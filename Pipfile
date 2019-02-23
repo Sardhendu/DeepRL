@@ -8,17 +8,18 @@ verify_ssl = true
 [packages]
 pyyaml = "==4.2b4"
 torchvision = "*"
+#protobuf = "==3.6.1"
 progressbar = "*"
 unityagents = "*"
 tensorboardx = "*"
 scipy = "*"
+mujoco-py = "==0.5.7"
+gym = "*"
+jsanimation = "*"
+cloudpickle = "*"
 
 [requires]
 python_version = "3.6"
-
-
-
 # If running TensorboardX shows error becasue of probuf then,
 # activate the environment and
 # pip install -U protobuf
-

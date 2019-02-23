@@ -8,49 +8,53 @@ import torch.optim as optim
 
 from src.pong_atari.model import Model
 from src.pong_atari.utils import collect_trajectories
-from src import commons as cmn
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Agent:
-    def __init__(self, args, env):
-        self.learning_rate = args.LEARNING_RATE
-        self.discount = args.DISCOUNT
-        self.beta = args.BETA
-        self.beta_decay = args.BETA_DECAY
+    def __init__(self, args, env, env_type, mode, agent_id=0):
+        self.LEARNING_RATE = args.LEARNING_RATE
+        self.DISCOUNT = args.DISCOUNT
+        self.BETA = args.BETA
+        self.BETA_DECAY = args.BETA_DECAY
         
         # Whether to perform Proximal policy Optimization
-        self.clip_surrogate = args.CLIP_SURROGATE
+        self.CLIP_SURROGATE = args.CLIP_SURROGATE
         # The Epsilon clip value the ratio of new_action_prob/old_action_prob is clamped at 1+epsilon_clip
-        self.epsilon_clip = args.EPSILON_CLIP
-        self.epsilon_clip_decay = args.EPSILON_CLIP_DECAY
-        self.trajectory_inner_loop = args.TRAJECTORY_INNER_LOOP_CNT
+        self.EPSILON_CLIP = args.EPSILON_CLIP
+        self.EPSILON_CLIP_DECAY = args.EPSILON_CLIP_DECAY
+        self.TRANJECTORY_INNER_LOOP_CNT = args.TRAJECTORY_INNER_LOOP_CNT
 
-        self.save_after_episodes = args.SAVE_AFTER_EPISODES
-        self.save_model_path = args.CHECKPOINT_PATH
-        self.save_stats_path = args.STATS_JSON_PATH
+        self.SAVE_AFTER_EPISODES = args.SAVE_AFTER_EPISODES
         
-        if os.path.exists(self.save_stats_path):
-            self.stats_dict = cmn.read_json(self.save_stats_path)
-        else:
-            self.stats_dict = defaultdict(list)
+        self.CHECKPOINT_DIR = args.CHECKPOINT_DIR
+        self.SUMMARY_LOGGER = args.SUMMARY_LOGGER
+        
+        # if os.path.exists(self.save_stats_path):
+        #     self.stats_dict = cmn.read_json(self.save_stats_path)
+        # else:
+        #     self.stats_dict = defaultdict(list)
             
         self.env = env
         self.policy_nn = Model(args.NET_NAME).to(device)
-        self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.learning_rate)
+        self.optimizer = optim.Adam(self.policy_nn.parameters(), lr=self.LEARNING_RATE)
 
         # Actions
         self.RIGHTFIRE = 4
         self.LEFTFIRE = 5
+        
+    def log(self, tag, value_dict, step):
+        self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)
+
+class ReinforceAgent(Agent):
+    def __init__(self, args, env, env_type, mode, agent_id=0):
+        super().__init__(args, env, env_type, mode,  agent_id)
 
     def get_actions_probs(self, policy, states):
-        """
-        
-        :param states: [trajectory_horizon, num_parallel_instances, num_consecutive_frames, img_height,
-                            img_width], Grayscale
+        """ Ouptut the probability of each action
+        :param states: [trajectory_horizon, num_parallel_instances, num_consecutive_frames, img_height,img_width], Grayscale
         :return:    sigmoid_activateions: action_probabilities [H, n] each column represents the action taken by each parallel nodes
-        
         Operations:
                 states_collated = [H*n, 2, 80, 80] : [mini_batch_size, num_consecutive_frames, img_height, img_width]
         """
@@ -106,7 +110,7 @@ class Agent:
         rewards = np.asarray(rewards)  # [h, n]
         
         # Compute discounted rewards:
-        discounts = pow(self.discount, np.arange(len(rewards)))
+        discounts = pow(self.DISCOUNT, np.arange(len(rewards)))
         discounted_rewards = rewards * discounts[:, np.newaxis]  # [H, n] * [H, 1] = [H, n]
         # Flip vertically, do consequtive cumulative sum, reflip-vertically
         discounted_future_rewards = discounted_rewards[::-1].cumsum(axis=0)[::-1]  # [H, n]
@@ -130,7 +134,7 @@ class Agent:
         # loss = rewards*torch.log(new_action_probs)
         if clip_surrogate:
             reinforce_ratio = new_action_probs / old_action_probs
-            reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - self.epsilon_clip, 1 + self.epsilon_clip)
+            reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - self.EPSILON_CLIP, 1 + self.EPSILON_CLIP)
             surrogate_loss = torch.min(reinforce_ratio * rewards, reinforce_clip_ratio * rewards)
         else:
             reinforce_ratio = new_action_probs / old_action_probs
@@ -147,24 +151,21 @@ class Agent:
             (1-new_action_probs) * torch.log((1-old_action_probs) + 1.e-10)
         )
         
-        # return torch.mean(loss+beta*cross_entropy_reg)
-        
-        return (torch.mean(surrogate_loss + self.beta*cross_entropy_reg),
+        return (torch.mean(surrogate_loss + self.BETA*cross_entropy_reg),
                 torch.mean(reinforce_ratio),
                 torch.mean(reinforce_clip_ratio),
                 torch.mean(surrogate_loss)
                 )
     
-    
     def learn(self, horizon, num_parallel_env, episode_num):
         # Collect Trajectories
         old_probs, states, actions, rewards = collect_trajectories(self.env, self.policy_nn, horizon, num_parallel_env)
 
-        # We take negative of log loss because pytorch by default performs gradient descent and we want to
-        # perform gradient ascend
-        for _ in range(0, self.trajectory_inner_loop):
+        # We take negative of log loss because pytorch by default performs gradient descent and we want to perform
+        # gradient ascend
+        for _ in range(0, self.TRANJECTORY_INNER_LOOP_CNT):
             loss, rforce_ratio, rforce_clip_ratio, surr_loss = self.surrogate(
-                    self.policy_nn, old_probs, states, actions, rewards, self.clip_surrogate
+                    self.policy_nn, old_probs, states, actions, rewards, self.CLIP_SURROGATE
             )
             loss = -1*loss
             self.optimizer.zero_grad()      # Set gradients to zero to avoid overlaps
@@ -172,27 +173,21 @@ class Agent:
             self.optimizer.step()
             
             # Store into stats dictionary
-            self.stats_dict['loss'].append(-1*float(loss))
-            self.stats_dict['beta_decay'].append(float(self.beta))
-            self.stats_dict['reinforce_ratio'].append(float(rforce_ratio))
-            self.stats_dict['reinforce_clip_ratio'].append(float(rforce_ratio))
-            self.stats_dict['surrogate_ratio'].append(float(surr_loss))
-            
+            self.log('loss', {'loss': -1 * float(loss)}, episode_num)
+            self.log('beta_decay', {'beta_decay': float(self.BETA)}, episode_num)
+            self.log('reinforce_ratio', {'reinforce_ratio': float(rforce_ratio)}, episode_num)
+            self.log('surrogate_ratio', {'surrogate_ratio': float(surr_loss)}, episode_num)
             
             del loss
     
-        self.beta *= self.beta_decay
-        self.epsilon_clip *= self.epsilon_clip_decay
+        self.BETA *= self.BETA_DECAY
+        self.EPSILON_CLIP *= self.EPSILON_CLIP_DECAY
 
         # get the average reward of the parallel environments
         total_rewards = np.sum(rewards, axis=0)
         average_reward = np.mean(total_rewards)
-        self.stats_dict['rewards'].append(average_reward)
         
-        if ((episode_num+1)%self.save_after_episodes) == 0:
-            torch.save(self.policy_nn, os.path.join(self.save_model_path, '%s.policy'%str(episode_num+1)))
-            cmn.dump_json(self.save_stats_path, self.stats_dict)
-        
+        self.log('rewards', {'rewards':average_reward}, episode_num)
         return rewards
     
     

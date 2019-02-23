@@ -27,11 +27,11 @@ class Model(nn.Module):
         # 2 channel from the stacked frame
         self.net_name = net_name
         
-        if net_name=='net1':
+        if net_name == 'net1':
             self.net1()
             self.forward_func = self.forward_net1
             
-        elif net_name=='net2':
+        elif net_name == 'net2':
             self.net2()
             self.forward_func = self.forward_net2
             
