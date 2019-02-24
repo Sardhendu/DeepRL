@@ -84,7 +84,7 @@ class PongAtariEnv:
         
         self.env.step(1)
         
-        # Warm-up: Perform some random states in teh beginning
+        # Warm-up: Perform some random states in the beginning
         for _ in range(0, nrand):
             frame1, reward1, done, _ = self.env.step(np.random.choice([RIGHTFIRE, LEFTFIRE]))
             frame2, reward2, done, _ = self.env.step(0)
@@ -116,9 +116,16 @@ class PongAtariEnv:
 
             
         
-            
-obj_pong = PongAtariEnv(TrainConfig, env_type='parallel', mode='train')
-obj_pong.train()
         
+mode = "test"
+if __name__ == "__main__":
+    if mode == 'train':
+        obj_pong = PongAtariEnv(TrainConfig, env_type='parallel', mode='train')
+        obj_pong.train()
+    else:
+        obj_pong = PongAtariEnv(TrainConfig, env_type='parallel', mode='test')
+        obj_pong.test(num_timesteps=2000, nrand=5)
+
+    
     
     

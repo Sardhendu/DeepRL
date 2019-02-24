@@ -132,6 +132,7 @@ if __name__ == "__main__":
     if mode == 'train':
         obj_ = ContinuousControl(args=TrainConfig, env_type='multi', mode='train')
         obj_.train()
-    else :
-        obj_ = ContinuousControl(args=TestConfig, env_type='multi', mode='test')
-        obj_.test()
+    else:
+        pass
+        # obj_ = ContinuousControl(args=TestConfig, env_type='multi', mode='test')
+        # obj_.test()
