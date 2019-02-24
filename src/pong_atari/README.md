@@ -1,6 +1,6 @@
 [//]: # (Image References)
 
-[image1]: https://github.com/Sardhendu/DeepRL/blob/master/pong_atari/images/pong-v0.gif "Trained Agent"
+[image1]: https://github.com/Sardhendu/DeepRL/tree/master/src/pong_atari/images/pong-v0.gif "Trained Agent"
 
 Play Pong
 -----------
