@@ -14,6 +14,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent:
     def __init__(self, args, env, env_type, mode, agent_id=0):
+        self.agent_id = agent_id
+        self.mode = mode
+        self.env_type = env_type
+        
         self.LEARNING_RATE = args.LEARNING_RATE
         self.DISCOUNT = args.DISCOUNT
         self.BETA = args.BETA
@@ -22,8 +26,7 @@ class Agent:
         # Whether to perform Proximal policy Optimization
         self.CLIP_SURROGATE = args.CLIP_SURROGATE
         # The Epsilon clip value the ratio of new_action_prob/old_action_prob is clamped at 1+epsilon_clip
-        self.EPSILON_CLIP = args.EPSILON_CLIP
-        self.EPSILON_CLIP_DECAY = args.EPSILON_CLIP_DECAY
+        self.EPSILON_CLIP_DECAY = args.EPSILON_CLIP_DECAY()
         self.TRANJECTORY_INNER_LOOP_CNT = args.TRAJECTORY_INNER_LOOP_CNT
 
         self.SAVE_AFTER_EPISODES = args.SAVE_AFTER_EPISODES
@@ -70,12 +73,11 @@ class ReinforceAgent(Agent):
         return sigmoid_activations
     
         
-    def surrogate(self, policy, old_action_probs, states, actions, rewards, clip_surrogate):
-    
+    def surrogate(self, policy, old_action_probs, states, actions, rewards, clip_surrogate, running_timestep):
         """
         :param nn_policy:           Model (Neural Network)
         :param old_action_probs:    action probabilities assigned while sampling trajectories
-        :param states:              [tau, n, nfr, img_h, img_w ] states in trajectories
+        :param states:              [tau, n, num_frames, img_h, img_w ] states in trajectories
         :param actions:             [H, n] Trajectory actions
         :param rewards:             [H, n] Rewards for state-action for each time step in trajectory
         :param discount:            Discount value
@@ -112,7 +114,7 @@ class ReinforceAgent(Agent):
         # Compute discounted rewards:
         discounts = pow(self.DISCOUNT, np.arange(len(rewards)))
         discounted_rewards = rewards * discounts[:, np.newaxis]  # [H, n] * [H, 1] = [H, n]
-        # Flip vertically, do consequtive cumulative sum, reflip-vertically
+        # Flip vertically, do consecutive cumulative sum, reflip-vertically
         discounted_future_rewards = discounted_rewards[::-1].cumsum(axis=0)[::-1]  # [H, n]
         
         # Normalize Rewards with mean and standard deviation, equivalent to Batch normalization
@@ -134,7 +136,9 @@ class ReinforceAgent(Agent):
         # loss = rewards*torch.log(new_action_probs)
         if clip_surrogate:
             reinforce_ratio = new_action_probs / old_action_probs
-            reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - self.EPSILON_CLIP, 1 + self.EPSILON_CLIP)
+            
+            clip_value = self.EPSILON_CLIP_DECAY.sample()
+            reinforce_clip_ratio = torch.clamp(reinforce_ratio, 1 - clip_value, 1 + clip_value)
             surrogate_loss = torch.min(reinforce_ratio * rewards, reinforce_clip_ratio * rewards)
         else:
             reinforce_ratio = new_action_probs / old_action_probs
@@ -150,7 +154,9 @@ class ReinforceAgent(Agent):
             new_action_probs * torch.log(old_action_probs + 1.e-10) +
             (1-new_action_probs) * torch.log((1-old_action_probs) + 1.e-10)
         )
-        
+
+        self.log('agent_%s/surrogate/epsilon_clip' % str(self.agent_id), {'epsilon_clip': clip_value},
+                 running_timestep)
         return (torch.mean(surrogate_loss + self.BETA*cross_entropy_reg),
                 torch.mean(reinforce_ratio),
                 torch.mean(reinforce_clip_ratio),
@@ -163,9 +169,10 @@ class ReinforceAgent(Agent):
 
         # We take negative of log loss because pytorch by default performs gradient descent and we want to perform
         # gradient ascend
-        for _ in range(0, self.TRANJECTORY_INNER_LOOP_CNT):
+        for tstep in range(0, self.TRANJECTORY_INNER_LOOP_CNT):
+            running_timestep = (episode_num*self.TRANJECTORY_INNER_LOOP_CNT) + (tstep)
             loss, rforce_ratio, rforce_clip_ratio, surr_loss = self.surrogate(
-                    self.policy_nn, old_probs, states, actions, rewards, self.CLIP_SURROGATE
+                    self.policy_nn, old_probs, states, actions, rewards, self.CLIP_SURROGATE, running_timestep
             )
             loss = -1*loss
             self.optimizer.zero_grad()      # Set gradients to zero to avoid overlaps
@@ -173,21 +180,20 @@ class ReinforceAgent(Agent):
             self.optimizer.step()
             
             # Store into stats dictionary
-            self.log('loss', {'loss': -1 * float(loss)}, episode_num)
-            self.log('beta_decay', {'beta_decay': float(self.BETA)}, episode_num)
-            self.log('reinforce_ratio', {'reinforce_ratio': float(rforce_ratio)}, episode_num)
-            self.log('surrogate_ratio', {'surrogate_ratio': float(surr_loss)}, episode_num)
+            self.log('agent_%s/loss'%str(self.agent_id), {'loss': -1 * float(loss)}, running_timestep)
+            self.log('agent_%s/beta_decay'%str(self.agent_id), {'beta_decay': float(self.BETA)}, running_timestep)
+            self.log('agent_%s/reinforce_ratio'%str(self.agent_id), {'reinforce_ratio': float(rforce_ratio)}, running_timestep)
+            self.log('agent_%s/surrogate_ratio'%str(self.agent_id), {'surrogate_ratio': float(surr_loss)}, running_timestep)
             
             del loss
     
         self.BETA *= self.BETA_DECAY
-        self.EPSILON_CLIP *= self.EPSILON_CLIP_DECAY
 
         # get the average reward of the parallel environments
         total_rewards = np.sum(rewards, axis=0)
         average_reward = np.mean(total_rewards)
         
-        self.log('rewards', {'rewards':average_reward}, episode_num)
+        self.log('agent_%s/rewards'%str(self.agent_id), {'rewards':average_reward}, running_timestep)
         return rewards
     
     

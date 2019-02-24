@@ -60,7 +60,7 @@ class PongAtariEnv:
         avg_rewards = []
         
         for e in range(self.num_episodes):
-            #     print('Running Episode .. ', e)
+
             # collect trajectories
             rewards = self.agent.learn(self.horizon, self.num_parallel_env, e)
             total_rewards = np.sum(rewards, axis=0)

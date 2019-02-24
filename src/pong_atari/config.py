@@ -1,6 +1,7 @@
 
 import os
 from src.logger import Logger
+from src.exploration import EpsilonGreedy
 
 class TrainConfig:
     LEARNING_RATE = 0.0001
@@ -10,8 +11,9 @@ class TrainConfig:
     
     # To perform Proximal policy Optimization
     CLIP_SURROGATE = True
-    EPSILON_CLIP = 0.1
-    EPSILON_CLIP_DECAY = 0.999
+    EPSILON_CLIP_DECAY = lambda: EpsilonGreedy(
+            epsilon_init=0.1, epsilon_min=0.01, decay_value=0.999, decay_after_step=4, seed=0
+    )  # Note decay_after_steps should approximately be equal to the num_timesteps in one episode
     TRAJECTORY_INNER_LOOP_CNT = 4
     
     # Setup
