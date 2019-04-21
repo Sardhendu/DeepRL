@@ -50,6 +50,7 @@ class Agent:
     def log(self, tag, value_dict, step):
         self.SUMMARY_LOGGER.add_scalars(tag, value_dict, step)
 
+
 class ReinforceAgent(Agent):
     def __init__(self, args, env, env_type, mode, agent_id=0):
         super().__init__(args, env, env_type, mode,  agent_id)
@@ -72,7 +73,6 @@ class ReinforceAgent(Agent):
         sigmoid_activations = sigmoid_activations.view(states.shape[:-3])
         return sigmoid_activations
     
-        
     def surrogate(self, policy, old_action_probs, states, actions, rewards, clip_surrogate, running_timestep):
         """
         :param nn_policy:           Model (Neural Network)

@@ -1,7 +1,6 @@
 from collections import deque
 
 import numpy as np
-import torch
 from unityagents import UnityEnvironment
 
 from src.navigation.agent import DDQNAgent
@@ -11,7 +10,7 @@ class CollectBananaENV:
     def __init__(self, env_type='vector', mode='train'):
         """
         This is a wrapper on top of the brain environment that provides useful function to render the environment
-        call very similar to like calling the open AI gym environement.
+        call very similar to like calling the open AI gym environment.
 
         Wrapper Code referred from : https://github.com/yingweiy/drlnd_project1_navigation
 
@@ -135,8 +134,9 @@ class CollectBanana:
             score = 0
             for t in range(self.args.NUM_TIMESTEPS):
                 action = self.agent.act(state, running_timestep)
+                print('[Train]: action: ', action)
                 next_state, reward, done, _ = self.env.step(action)
-                # print('[Train]: ', next_state.shape, reward, done)
+                print('[Train]: ', next_state.shape, reward, done)
                 self.agent.step(state, action, reward, next_state, done, running_timestep)
                 state = next_state
                 score += reward
@@ -195,6 +195,7 @@ class CollectBanana:
 
 
 
+# env_type = 'visual and 'vector'
 if __name__ =="__main__":
     mode = 'test'
     env_type = 'vector'
@@ -202,6 +203,11 @@ if __name__ =="__main__":
         if env_type == 'vector':
             from src.navigation.config import TrainVectorConfig
             args = TrainVectorConfig
+            obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
+            obj_cb.train()
+        elif env_type == 'visual':
+            from src.navigation.config import TrainVisualConfig
+            args = TrainVisualConfig
             obj_cb = CollectBanana(args, env_type='vector', mode='train', buffer_type='ER')
             obj_cb.train()
     elif mode == 'test':

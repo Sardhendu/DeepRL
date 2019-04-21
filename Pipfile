@@ -11,12 +11,15 @@ torchvision = "*"
 #protobuf = "==3.6.1"
 progressbar = "*"
 unityagents = "*"
+mlagents = "*"
+gym-unity = "*"
 tensorboardx = "*"
 scipy = "*"
 mujoco-py = "==0.5.7"
 gym = "*"
 jsanimation = "*"
 cloudpickle = "*"
+
 
 [requires]
 python_version = "3.6"

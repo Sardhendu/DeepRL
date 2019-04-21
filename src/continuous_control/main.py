@@ -1,5 +1,4 @@
 
-
 import numpy as np
 from collections import deque
 from src.continuous_control.config import TrainConfig, TestConfig
@@ -45,9 +44,6 @@ class ContinuousControlEnv:
     
     def close(self):
         self.base_env.close()
-
-
-
 
 class ContinuousControl:
     def __init__(self, args, env_type, mode):
@@ -124,7 +120,6 @@ class ContinuousControl:
                 if any(dones):
                     print('Done.')
                     break
-
 
 
 if __name__ == "__main__":
