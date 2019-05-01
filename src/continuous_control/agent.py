@@ -10,9 +10,7 @@ import src.utils as utils
 # TODO: Try scaling the input features
 # TODO: Density plot showing estimated Q values versus observed returns sampled from test (Refer DDPG Paper)
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 
 class DDPG:
@@ -184,7 +182,6 @@ class DDPGAgent(DDPG):
                     utils.soft_update(self.actor_local, self.actor_target, self.TAU)
             else:
                 raise ValueError('Only One of HARD_UPDATE and SOFT_UPDATE is to be activated')
-
                 
     def learn(self, experiences, gamma, running_timestep):
         """

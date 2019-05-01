@@ -128,6 +128,6 @@ if __name__ == "__main__":
         obj_ = ContinuousControl(args=TrainConfig, env_type='multi', mode='train')
         obj_.train()
     else:
-        pass
-        # obj_ = ContinuousControl(args=TestConfig, env_type='multi', mode='test')
-        # obj_.test()
+        # pass
+        obj_ = ContinuousControl(args=TestConfig, env_type='multi', mode='test')
+        obj_.test()
