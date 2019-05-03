@@ -31,12 +31,30 @@
 
 7. Actor-Critic:
     Policy based methods such as REINFORCE have high variance but low bias. In a nutshell, these method collect 
-    many-many trajectories and based on the outcome (won or lost), these methods update their network weights. If the game was 
+    many-many trajectories and based on the outcome (won or lost), these update their network weights. If the game was 
     lost then the network weights are updated such that the probability of produced action decreases and if the game 
     was won then the probability of the produced actions are increased. In this process however, some actions that 
-    might actually be beneficial could be downvoted because of the game was lost.     
+    might actually be beneficial could be downvoted because of the game was lost.  
     
-    Step 1: First we get the distribution of actions π(q(a|s;θπ)) form the actor network (Policy gradient method) using 
+    The problem with Policy based method that follows similar paradigm to "Monte-Carlo" based approaches is that 
+    rewards are calculated at the end of the episode. However, if rewards were calculated after every experience <s, 
+    a> then we could have easily penalized bad actions even if the agent won the game at the end. 
+     
+     To the rescue comes actor critic methods where a policy based method is used as a baseline/actor model, that 
+     decides on the action to take. And, a TD based method is used as a critic to calculate the discounted future
+     rewards after every experience. In other words the critic is used to evaluate whether the action chosen was good
+      or not. 
+      
+     How to train the model:
+     Policy Gradient :
+        Policy update: ∆θ = &alpha * &nabla; log π(st, at, θ) * R(t) 
+        
+     Actor - Critic :
+        Policy update: ∆θ = œ * &nabla; log π(st, at, θ) * Q(st,at)
+        where,  Q(st, at) =  
+
+    Step 1: First we get the distribution of actions π(q(a|s;θπ)) form the actor network (Policy gradient method) 
+     using 
     current state. Using the action distribution we select the best action and get the reward and next state i.e. our 
     experience tuple <s, a, r, s'>.
     

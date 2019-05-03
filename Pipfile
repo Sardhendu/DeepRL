@@ -19,7 +19,7 @@ mujoco-py = "==0.5.7"
 gym = "*"
 jsanimation = "*"
 cloudpickle = "*"
-
+recommonmark = "*"
 
 [requires]
 python_version = "3.6"
