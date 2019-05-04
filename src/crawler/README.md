@@ -51,7 +51,7 @@
         
      Actor - Critic :
         Policy update: ∆θ = œ * &nabla; log π(st, at, θ) * Q(st,at)
-        where,  Q(st, at) =  
+        where,  Q(st, at) =  rt + gamma * Q(s(t+1), a(t+1)) 
 
     Step 1: First we get the distribution of actions π(q(a|s;θπ)) form the actor network (Policy gradient method) 
      using 
